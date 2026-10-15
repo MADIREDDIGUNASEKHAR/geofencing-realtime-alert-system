@@ -11,6 +11,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"geofencing-backend/internal/models"
+	"geofencing-backend/internal/pagination"
 )
 
 var ErrDuplicateVehicleNumber = errors.New("vehicle_number already registered")
@@ -38,11 +39,13 @@ func (r *Repository) Create(ctx context.Context, v models.Vehicle) error {
 	return nil
 }
 
-func (r *Repository) List(ctx context.Context) ([]models.Vehicle, error) {
-	rows, err := r.pool.Query(ctx, `
-		SELECT id, vehicle_number, driver_name, vehicle_type, phone, status, created_at
-		FROM vehicles ORDER BY created_at DESC
-	`)
+func (r *Repository) List(ctx context.Context, page pagination.Params) ([]models.Vehicle, error) {
+	query := `SELECT id, vehicle_number, driver_name, vehicle_type, phone, status, created_at
+		FROM vehicles ORDER BY created_at DESC`
+	args := []interface{}{}
+	query, args = page.Apply(query, args)
+
+	rows, err := r.pool.Query(ctx, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("query vehicles: %w", err)
 	}

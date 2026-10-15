@@ -92,6 +92,23 @@ Vite serves the dev server on `http://localhost:5173` and proxies API calls to
 | `VITE_WS_URL`        | derived from `VITE_API_BASE_URL`        | Override the `/ws/alerts` WebSocket URL      |
 | `VITE_API_KEY`       | *(empty)*                               | Sent as `X-API-Key` if the backend requires it |
 
+## Bonus features
+
+- **Rate limiting**: `POST /vehicles/location` is limited to 5 requests/sec
+  per client IP (burst 20); exceeding it returns `429`.
+- **Pagination**: `GET /geofences`, `GET /vehicles`, and `GET /alerts` accept
+  optional `limit`/`offset` query params (on top of their documented
+  filters). Omitting them preserves each endpoint's original, unpaginated
+  response exactly as documented below. `GET /violations/history` already
+  paginates via its required `limit` param (default 50, max 500) plus
+  `total_count`.
+- **API key auth**: set `API_KEY` in the backend environment to require a
+  matching `X-API-Key` header on every REST endpoint except `/healthz` and
+  `/ws/alerts`. Left unset (the default), the API stays open for easy local
+  testing and grading.
+- **Unit tests**: `backend/internal/geo/geo_test.go` covers polygon
+  validation and WKT conversion; run with `go test ./...`.
+
 ## API testing guide (curl)
 
 All responses include a `time_ns` field (string, nanoseconds) measuring handler

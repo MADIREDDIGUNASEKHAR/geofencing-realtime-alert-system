@@ -9,6 +9,7 @@ import (
 	"geofencing-backend/internal/httpx"
 	"geofencing-backend/internal/ids"
 	"geofencing-backend/internal/models"
+	"geofencing-backend/internal/pagination"
 )
 
 type Handler struct {
@@ -100,8 +101,15 @@ type listResponse struct {
 
 func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 	start := time.Now()
+	q := r.URL.Query()
 
-	vehicles, err := h.repo.List(r.Context())
+	page, pageErr := pagination.Parse(q.Get("limit"), q.Get("offset"))
+	if pageErr != "" {
+		httpx.WriteError(w, http.StatusBadRequest, start, pageErr)
+		return
+	}
+
+	vehicles, err := h.repo.List(r.Context(), page)
 	if err != nil {
 		httpx.WriteError(w, http.StatusInternalServerError, start, "failed to list vehicles")
 		return

@@ -9,6 +9,7 @@ import (
 	"geofencing-backend/internal/httpx"
 	"geofencing-backend/internal/ids"
 	"geofencing-backend/internal/models"
+	"geofencing-backend/internal/pagination"
 )
 
 var allowedCategories = map[string]bool{
@@ -110,9 +111,16 @@ type listResponse struct {
 
 func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 	start := time.Now()
-	category := r.URL.Query().Get("category")
+	q := r.URL.Query()
+	category := q.Get("category")
 
-	geofences, err := h.repo.List(r.Context(), category)
+	page, pageErr := pagination.Parse(q.Get("limit"), q.Get("offset"))
+	if pageErr != "" {
+		httpx.WriteError(w, http.StatusBadRequest, start, pageErr)
+		return
+	}
+
+	geofences, err := h.repo.List(r.Context(), category, page)
 	if err != nil {
 		httpx.WriteError(w, http.StatusInternalServerError, start, "failed to list geofences")
 		return

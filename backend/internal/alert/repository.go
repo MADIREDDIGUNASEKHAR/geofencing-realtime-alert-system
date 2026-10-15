@@ -8,6 +8,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"geofencing-backend/internal/models"
+	"geofencing-backend/internal/pagination"
 )
 
 type Repository struct {
@@ -29,7 +30,7 @@ func (r *Repository) Create(ctx context.Context, a models.AlertConfig) error {
 	return nil
 }
 
-func (r *Repository) List(ctx context.Context, geofenceID, vehicleID string) ([]models.AlertConfigView, error) {
+func (r *Repository) List(ctx context.Context, geofenceID, vehicleID string, page pagination.Params) ([]models.AlertConfigView, error) {
 	query := `
 		SELECT a.id, a.geofence_id, g.name, a.vehicle_id, v.vehicle_number, a.event_type, a.status, a.created_at
 		FROM alert_configs a
@@ -47,6 +48,7 @@ func (r *Repository) List(ctx context.Context, geofenceID, vehicleID string) ([]
 		query += fmt.Sprintf(" AND a.vehicle_id = $%d", len(args))
 	}
 	query += " ORDER BY a.created_at DESC"
+	query, args = page.Apply(query, args)
 
 	rows, err := r.pool.Query(ctx, query, args...)
 	if err != nil {

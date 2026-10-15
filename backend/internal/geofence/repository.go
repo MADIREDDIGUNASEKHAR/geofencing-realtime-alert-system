@@ -11,6 +11,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"geofencing-backend/internal/models"
+	"geofencing-backend/internal/pagination"
 )
 
 type Repository struct {
@@ -36,7 +37,7 @@ func (r *Repository) Create(ctx context.Context, g models.Geofence, wkt string) 
 	return nil
 }
 
-func (r *Repository) List(ctx context.Context, category string) ([]models.Geofence, error) {
+func (r *Repository) List(ctx context.Context, category string, page pagination.Params) ([]models.Geofence, error) {
 	query := `SELECT id, name, description, category, coordinates, status, created_at FROM geofences`
 	args := []interface{}{}
 	if category != "" {
@@ -44,6 +45,7 @@ func (r *Repository) List(ctx context.Context, category string) ([]models.Geofen
 		args = append(args, category)
 	}
 	query += ` ORDER BY created_at DESC`
+	query, args = page.Apply(query, args)
 
 	rows, err := r.pool.Query(ctx, query, args...)
 	if err != nil {

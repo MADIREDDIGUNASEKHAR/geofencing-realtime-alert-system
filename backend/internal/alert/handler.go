@@ -8,6 +8,7 @@ import (
 	"geofencing-backend/internal/httpx"
 	"geofencing-backend/internal/ids"
 	"geofencing-backend/internal/models"
+	"geofencing-backend/internal/pagination"
 )
 
 var allowedEventTypes = map[string]bool{"entry": true, "exit": true, "both": true}
@@ -118,10 +119,17 @@ type listResponse struct {
 
 func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 	start := time.Now()
-	geofenceID := r.URL.Query().Get("geofence_id")
-	vehicleID := r.URL.Query().Get("vehicle_id")
+	q := r.URL.Query()
+	geofenceID := q.Get("geofence_id")
+	vehicleID := q.Get("vehicle_id")
 
-	views, err := h.repo.List(r.Context(), geofenceID, vehicleID)
+	page, pageErr := pagination.Parse(q.Get("limit"), q.Get("offset"))
+	if pageErr != "" {
+		httpx.WriteError(w, http.StatusBadRequest, start, pageErr)
+		return
+	}
+
+	views, err := h.repo.List(r.Context(), geofenceID, vehicleID, page)
 	if err != nil {
 		httpx.WriteError(w, http.StatusInternalServerError, start, "failed to list alerts")
 		return
