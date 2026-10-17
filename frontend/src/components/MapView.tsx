@@ -38,7 +38,7 @@ function ClickCapture({ onClick }: { onClick?: (lat: number, lng: number) => voi
 export default function MapView({
   geofences = [],
   vehicles = [],
-  center = [37.7749, -122.4194],
+  center = [12.9716, 77.5946], // Bangalore, used only when there's no geofence/vehicle data yet
   zoom = 13,
   onMapClick,
   drawPoints = [],

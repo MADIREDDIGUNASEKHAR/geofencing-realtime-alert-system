@@ -110,6 +110,8 @@ export default function Geofences() {
     }
   }
 
+  const mapCenter: LatLng | undefined = geofences[0]?.coordinates[0]
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <div className="lg:col-span-1 space-y-4">
@@ -213,7 +215,7 @@ export default function Geofences() {
       </div>
 
       <div className="lg:col-span-2 h-[640px]">
-        <MapView geofences={geofences} drawPoints={drawPoints} onMapClick={handleMapClick} />
+        <MapView geofences={geofences} center={mapCenter} drawPoints={drawPoints} onMapClick={handleMapClick} />
       </div>
     </div>
   )
