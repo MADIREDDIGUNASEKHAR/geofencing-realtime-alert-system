@@ -86,6 +86,7 @@ func main() {
 
 		r.Post("/alerts/configure", alertHandler.Configure)
 		r.Get("/alerts", alertHandler.List)
+		r.Get("/alerts/history", alertHandler.History)
 
 		r.Get("/violations/history", violationHandler.History)
 	})

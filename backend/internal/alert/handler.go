@@ -3,6 +3,7 @@ package alert
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
 	"time"
 
 	"geofencing-backend/internal/httpx"
@@ -12,6 +13,11 @@ import (
 )
 
 var allowedEventTypes = map[string]bool{"entry": true, "exit": true, "both": true}
+
+const (
+	defaultLogLimit = 50
+	maxLogLimit     = 500
+)
 
 type Handler struct {
 	repo *Repository
@@ -150,4 +156,74 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 	}
 
 	httpx.WriteJSON(w, http.StatusOK, listResponse{Alerts: dtos, TimeNs: httpx.ElapsedNs(start)})
+}
+
+type alertLogDTO struct {
+	ID            string               `json:"id"`
+	AlertConfigID *string              `json:"alert_config_id,omitempty"`
+	EventType     string               `json:"event_type"`
+	DeliveredAt   time.Time            `json:"delivered_at"`
+	Vehicle       models.AlertVehicle  `json:"vehicle"`
+	Geofence      models.AlertGeofence `json:"geofence"`
+	Location      models.AlertLocation `json:"location"`
+}
+
+type logHistoryResponse struct {
+	Alerts     []alertLogDTO `json:"alerts"`
+	TotalCount int           `json:"total_count"`
+	TimeNs     string        `json:"time_ns"`
+}
+
+// History returns alerts that were actually dispatched over /ws/alerts, so a
+// client that missed the live push (e.g. wasn't connected yet) can catch up
+// on exactly what was sent, distinct from GET /violations/history which
+// includes every entry/exit event even when no alert rule matched it.
+func (h *Handler) History(w http.ResponseWriter, r *http.Request) {
+	start := time.Now()
+	q := r.URL.Query()
+	geofenceID := q.Get("geofence_id")
+	vehicleID := q.Get("vehicle_id")
+
+	limit := defaultLogLimit
+	if raw := q.Get("limit"); raw != "" {
+		v, err := strconv.Atoi(raw)
+		if err != nil || v < 1 {
+			httpx.WriteError(w, http.StatusBadRequest, start, "limit must be a positive integer")
+			return
+		}
+		limit = v
+	}
+	if limit > maxLogLimit {
+		limit = maxLogLimit
+	}
+	offset := 0
+	if raw := q.Get("offset"); raw != "" {
+		v, err := strconv.Atoi(raw)
+		if err != nil || v < 0 {
+			httpx.WriteError(w, http.StatusBadRequest, start, "offset must be a non-negative integer")
+			return
+		}
+		offset = v
+	}
+
+	records, total, err := h.repo.ListLog(r.Context(), geofenceID, vehicleID, pagination.Params{Limit: limit, Offset: offset})
+	if err != nil {
+		httpx.WriteError(w, http.StatusInternalServerError, start, "failed to fetch alert history")
+		return
+	}
+
+	dtos := make([]alertLogDTO, 0, len(records))
+	for _, rec := range records {
+		dtos = append(dtos, alertLogDTO{
+			ID:            rec.ID,
+			AlertConfigID: rec.AlertConfigID,
+			EventType:     rec.EventType,
+			DeliveredAt:   rec.DeliveredAt,
+			Vehicle:       rec.Event.Vehicle,
+			Geofence:      rec.Event.Geofence,
+			Location:      rec.Event.Location,
+		})
+	}
+
+	httpx.WriteJSON(w, http.StatusOK, logHistoryResponse{Alerts: dtos, TotalCount: total, TimeNs: httpx.ElapsedNs(start)})
 }

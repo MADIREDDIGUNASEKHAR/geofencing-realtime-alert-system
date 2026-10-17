@@ -108,6 +108,14 @@ Vite serves the dev server on `http://localhost:5173` and proxies API calls to
   testing and grading.
 - **Unit tests**: `backend/internal/geo/geo_test.go` covers polygon
   validation and WKT conversion; run with `go test ./...`.
+- **Dispatched-alert history**: `GET /alerts/history` (optional
+  `geofence_id`/`vehicle_id`/`limit`/`offset` filters) returns every alert
+  actually sent over `/ws/alerts`, reconstructed from its persisted payload.
+  This is additive — it doesn't change any of the 9 required endpoints —
+  and lets a client that wasn't connected when an alert fired catch up
+  afterward, since the live WebSocket channel only pushes to clients
+  connected at that moment. Surfaced in the frontend as the "Alert log"
+  section on the Alerts page.
 
 ## API testing guide (curl)
 

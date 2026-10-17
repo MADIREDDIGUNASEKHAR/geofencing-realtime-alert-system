@@ -1,6 +1,8 @@
 import type {
   AlertConfig,
   AlertConfigRequest,
+  AlertLogEntry,
+  AlertLogFilter,
   CreateGeofenceRequest,
   CreateVehicleRequest,
   Geofence,
@@ -106,6 +108,12 @@ export function configureAlert(req: AlertConfigRequest) {
 
 export function listAlerts(filter: { geofence_id?: string; vehicle_id?: string } = {}) {
   return request<{ alerts: AlertConfig[] }>(`/alerts${qs(filter)}`)
+}
+
+// Dispatched alerts (what was actually sent over /ws/alerts) — lets a client
+// that missed the live push catch up after the fact.
+export function getAlertHistory(filter: AlertLogFilter = {}) {
+  return request<{ alerts: AlertLogEntry[]; total_count: number }>(`/alerts/history${qs(filter)}`)
 }
 
 // --- Violations ---

@@ -3,7 +3,9 @@ package alert
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
@@ -106,6 +108,63 @@ func (r *Repository) VehicleExists(ctx context.Context, vehicleID string) (bool,
 	var exists bool
 	err := r.pool.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM vehicles WHERE id = $1)`, vehicleID).Scan(&exists)
 	return exists, err
+}
+
+// LogEntry is one dispatched alert, reconstructed from its stored WebSocket
+// payload plus delivery metadata.
+type LogEntry struct {
+	ID            string
+	AlertConfigID *string
+	EventType     string
+	DeliveredAt   time.Time
+	Event         models.AlertEvent
+}
+
+// ListLog returns dispatched alerts (what was actually broadcast over
+// /ws/alerts), filterable by geofence/vehicle, newest first. This lets a
+// client that missed the live push catch up on exactly what was sent,
+// distinct from ListViolations' full entry/exit history which includes
+// events that had no matching alert rule at all.
+func (r *Repository) ListLog(ctx context.Context, geofenceID, vehicleID string, page pagination.Params) ([]LogEntry, int, error) {
+	where := "WHERE 1 = 1"
+	args := []interface{}{}
+	if geofenceID != "" {
+		args = append(args, geofenceID)
+		where += fmt.Sprintf(" AND payload->'geofence'->>'geofence_id' = $%d", len(args))
+	}
+	if vehicleID != "" {
+		args = append(args, vehicleID)
+		where += fmt.Sprintf(" AND payload->'vehicle'->>'vehicle_id' = $%d", len(args))
+	}
+
+	var total int
+	countQuery := "SELECT COUNT(*) FROM alerts_log " + where
+	if err := r.pool.QueryRow(ctx, countQuery, args...).Scan(&total); err != nil {
+		return nil, 0, fmt.Errorf("count alerts log: %w", err)
+	}
+
+	query := "SELECT id, alert_config_id, event_type, payload, delivered_at FROM alerts_log " + where + " ORDER BY delivered_at DESC"
+	query, args = page.Apply(query, args)
+
+	rows, err := r.pool.Query(ctx, query, args...)
+	if err != nil {
+		return nil, 0, fmt.Errorf("query alerts log: %w", err)
+	}
+	defer rows.Close()
+
+	var out []LogEntry
+	for rows.Next() {
+		var entry LogEntry
+		var payload []byte
+		if err := rows.Scan(&entry.ID, &entry.AlertConfigID, &entry.EventType, &payload, &entry.DeliveredAt); err != nil {
+			return nil, 0, fmt.Errorf("scan alerts log: %w", err)
+		}
+		if err := json.Unmarshal(payload, &entry.Event); err != nil {
+			return nil, 0, fmt.Errorf("unmarshal alert payload: %w", err)
+		}
+		out = append(out, entry)
+	}
+	return out, total, rows.Err()
 }
 
 // LogDelivery records a dispatched alert for the historical audit trail.

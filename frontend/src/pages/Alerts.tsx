@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { ApiError, configureAlert, listAlerts, listGeofences, listVehicles } from '../api/client'
-import type { AlertConfig, EventType, Geofence, Vehicle } from '../api/types'
+import { ApiError, configureAlert, getAlertHistory, listAlerts, listGeofences, listVehicles } from '../api/client'
+import type { AlertConfig, AlertLogEntry, EventType, Geofence, Vehicle } from '../api/types'
 import {
   Button,
   Card,
@@ -31,12 +31,31 @@ export default function Alerts() {
   const [filterGeofence, setFilterGeofence] = useState('')
   const [filterVehicle, setFilterVehicle] = useState('')
 
+  const [alertLog, setAlertLog] = useState<AlertLogEntry[]>([])
+  const [logTotalCount, setLogTotalCount] = useState(0)
+  const [logLoading, setLogLoading] = useState(false)
+  const [logError, setLogError] = useState<string | null>(null)
+
   async function loadAlerts() {
     try {
       const res = await listAlerts({ geofence_id: filterGeofence || undefined, vehicle_id: filterVehicle || undefined })
       setAlerts(res.alerts ?? [])
     } catch (err) {
       setLoadError(err instanceof ApiError ? err.message : 'Failed to load alerts')
+    }
+  }
+
+  async function loadAlertLog() {
+    setLogLoading(true)
+    setLogError(null)
+    try {
+      const res = await getAlertHistory({ geofence_id: filterGeofence || undefined, vehicle_id: filterVehicle || undefined })
+      setAlertLog(res.alerts ?? [])
+      setLogTotalCount(res.total_count ?? 0)
+    } catch (err) {
+      setLogError(err instanceof ApiError ? err.message : 'Failed to load dispatched alerts')
+    } finally {
+      setLogLoading(false)
     }
   }
 
@@ -56,11 +75,13 @@ export default function Alerts() {
       }
     }
     loadAll()
+    loadAlertLog()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   useEffect(() => {
     loadAlerts()
+    loadAlertLog()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filterGeofence, filterVehicle])
 
@@ -200,6 +221,61 @@ export default function Alerts() {
               </tbody>
             </table>
           </div>
+        )}
+      </Card>
+
+      <Card className="lg:col-span-3">
+        <div className="flex items-center justify-between mb-1">
+          <h2 className="font-semibold text-gray-900">Alert log</h2>
+          {logLoading && <Spinner className="text-gray-400" />}
+        </div>
+        <p className="text-xs text-gray-500 mb-3">
+          Every alert actually dispatched over the real-time channel, so you can catch up on anything missed while
+          disconnected. Uses the same filters as above.
+        </p>
+
+        {logError ? (
+          <ErrorBanner message={logError} />
+        ) : alertLog.length === 0 ? (
+          <EmptyState message="No alerts have been dispatched yet." />
+        ) : (
+          <>
+            <div className="overflow-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left text-gray-500 border-b border-gray-200">
+                    <th className="py-2 pr-2">Delivered</th>
+                    <th className="py-2 pr-2">Vehicle</th>
+                    <th className="py-2 pr-2">Geofence</th>
+                    <th className="py-2 pr-2">Event</th>
+                    <th className="py-2 pr-2">Location</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {alertLog.map((a) => (
+                    <tr key={a.id} className="border-b border-gray-100">
+                      <td className="py-2 pr-2 whitespace-nowrap">{new Date(a.delivered_at).toLocaleString()}</td>
+                      <td className="py-2 pr-2">
+                        {a.vehicle.vehicle_number} <span className="text-gray-400">({a.vehicle.driver_name})</span>
+                      </td>
+                      <td className="py-2 pr-2">
+                        {a.geofence.geofence_name} <CategoryBadge category={a.geofence.category} />
+                      </td>
+                      <td className="py-2 pr-2">
+                        <EventTypeBadge eventType={a.event_type} />
+                      </td>
+                      <td className="py-2 pr-2 text-gray-500">
+                        {a.location.latitude.toFixed(5)}, {a.location.longitude.toFixed(5)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="text-xs text-gray-500 mt-2">
+              Showing {alertLog.length} of {logTotalCount}
+            </div>
+          </>
         )}
       </Card>
     </div>

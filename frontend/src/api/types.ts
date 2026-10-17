@@ -129,3 +129,21 @@ export interface AlertEvent {
     longitude: number
   }
 }
+
+// A single dispatched alert, as returned by GET /alerts/history (persisted
+// record of what was sent over /ws/alerts, for catching up after the fact).
+export interface AlertLogEntry {
+  id: string
+  alert_config_id?: string
+  event_type: ViolationEventType
+  delivered_at: string
+  vehicle: AlertEvent['vehicle']
+  geofence: AlertEvent['geofence']
+  location: AlertEvent['location']
+}
+
+export interface AlertLogFilter {
+  geofence_id?: string
+  vehicle_id?: string
+  limit?: number
+}
