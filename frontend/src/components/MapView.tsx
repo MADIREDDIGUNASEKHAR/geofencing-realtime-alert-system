@@ -1,3 +1,4 @@
+import L from 'leaflet'
 import { MapContainer, Marker, Polygon, Polyline, Popup, TileLayer, useMapEvents } from 'react-leaflet'
 import type { Geofence, LatLng } from '../api/types'
 
@@ -8,9 +9,37 @@ const CATEGORY_COLORS: Record<string, string> = {
   customer_area: '#16a34a',
 }
 
+// A small custom pin (instead of Leaflet's default marker) so vehicles read
+// clearly against colored geofence polygons on the map.
+const vehicleIcon = L.divIcon({
+  className: '',
+  html: `<div style="
+    width:30px;height:30px;border-radius:9999px;
+    background:linear-gradient(135deg,#6366f1,#4338ca);
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 2px 8px rgba(67,56,202,0.45);border:2.5px solid white;
+    font-size:14px;line-height:1;
+  ">🚚</div>`,
+  iconSize: [30, 30],
+  iconAnchor: [15, 15],
+  popupAnchor: [0, -15],
+})
+
+const pickedPointIcon = L.divIcon({
+  className: '',
+  html: `<div style="
+    width:22px;height:22px;border-radius:9999px;
+    background:#111827;border:3px solid white;
+    box-shadow:0 2px 6px rgba(0,0,0,0.35);
+  "></div>`,
+  iconSize: [22, 22],
+  iconAnchor: [11, 11],
+})
+
 export interface VehicleMarker {
   id: string
-  label: string
+  vehicleNumber: string
+  driverName: string
   lat: number
   lng: number
 }
@@ -71,10 +100,10 @@ export default function MapView({
           }}
         >
           <Popup>
-            <div className="text-sm">
-              <div className="font-semibold">{g.name}</div>
-              <div className="text-gray-500">{g.category.replace(/_/g, ' ')}</div>
-              {g.description && <div className="mt-1">{g.description}</div>}
+            <div className="text-sm min-w-[160px]">
+              <div className="font-semibold text-gray-900">{g.name}</div>
+              <div className="text-gray-400 text-xs capitalize mt-0.5">{g.category.replace(/_/g, ' ')}</div>
+              {g.description && <div className="mt-1.5 text-gray-600">{g.description}</div>}
             </div>
           </Popup>
         </Polygon>
@@ -87,16 +116,21 @@ export default function MapView({
         />
       )}
       {drawPoints.map((p, i) => (
-        <Marker key={`draw-${i}`} position={p} />
+        <Marker key={`draw-${i}`} position={p} icon={pickedPointIcon} />
       ))}
 
       {vehicles.map((v) => (
-        <Marker key={v.id} position={[v.lat, v.lng]}>
-          <Popup>{v.label}</Popup>
+        <Marker key={v.id} position={[v.lat, v.lng]} icon={vehicleIcon}>
+          <Popup>
+            <div className="text-sm min-w-[140px]">
+              <div className="font-semibold text-gray-900">{v.vehicleNumber}</div>
+              <div className="text-gray-500 text-xs mt-0.5">{v.driverName}</div>
+            </div>
+          </Popup>
         </Marker>
       ))}
 
-      {pickedPoint && <Marker position={pickedPoint} />}
+      {pickedPoint && <Marker position={pickedPoint} icon={pickedPointIcon} />}
     </MapContainer>
   )
 }

@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
+import { Hexagon, MapPin } from 'lucide-react'
 import MapView from '../components/MapView'
 import { ApiError, createGeofence, listGeofences } from '../api/client'
 import type { Geofence, GeofenceCategory, LatLng } from '../api/types'
@@ -10,6 +11,7 @@ import {
   ErrorBanner,
   Input,
   Label,
+  PageHeader,
   Select,
   Spinner,
   SuccessBanner,
@@ -113,10 +115,12 @@ export default function Geofences() {
   const mapCenter: LatLng | undefined = geofences[0]?.coordinates[0]
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <div className="lg:col-span-1 space-y-4">
+    <div>
+      <PageHeader icon={Hexagon} title="Geofences" description="Draw boundaries and manage zone categories" />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="lg:col-span-1 space-y-5">
         <Card>
-          <h2 className="font-semibold text-gray-900 mb-3">Create geofence</h2>
+          <h2 className="font-semibold text-gray-900 mb-4">Create geofence</h2>
           <form onSubmit={handleSubmit} className="space-y-3">
             <div>
               <Label>Name</Label>
@@ -178,9 +182,9 @@ export default function Geofences() {
         </Card>
 
         <Card>
-          <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center justify-between mb-4">
             <h2 className="font-semibold text-gray-900">Geofences</h2>
-            <Select value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)} className="w-40">
+            <Select value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)} className="w-40 !py-1.5 text-xs">
               <option value="">All categories</option>
               {CATEGORIES.map((c) => (
                 <option key={c} value={c}>
@@ -196,17 +200,25 @@ export default function Geofences() {
           ) : loadError ? (
             <ErrorBanner message={loadError} />
           ) : geofences.length === 0 ? (
-            <EmptyState message="No geofences yet. Create one to get started." />
+            <EmptyState icon={Hexagon} message="No geofences yet. Create one to get started." />
           ) : (
             <ul className="space-y-2 max-h-96 overflow-auto">
               {geofences.map((g) => (
-                <li key={g.id} className="border border-gray-100 rounded-lg p-2">
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium text-sm text-gray-900">{g.name}</span>
-                    <CategoryBadge category={g.category} />
+                <li
+                  key={g.id}
+                  className="flex gap-3 border border-gray-100 rounded-xl p-3 hover:border-gray-200 transition-colors"
+                >
+                  <span className="flex items-center justify-center h-8 w-8 shrink-0 rounded-lg bg-gray-50 text-gray-400">
+                    <MapPin className="h-4 w-4" />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-medium text-sm text-gray-900 truncate">{g.name}</span>
+                      <CategoryBadge category={g.category} />
+                    </div>
+                    {g.description && <p className="text-xs text-gray-500 mt-0.5">{g.description}</p>}
+                    <p className="text-[11px] text-gray-400 mt-1">{g.coordinates.length} points</p>
                   </div>
-                  {g.description && <p className="text-xs text-gray-500 mt-1">{g.description}</p>}
-                  <p className="text-[11px] text-gray-400 mt-1">{g.coordinates.length} points</p>
                 </li>
               ))}
             </ul>
@@ -214,8 +226,9 @@ export default function Geofences() {
         </Card>
       </div>
 
-      <div className="lg:col-span-2 h-[640px]">
-        <MapView geofences={geofences} center={mapCenter} drawPoints={drawPoints} onMapClick={handleMapClick} />
+        <div className="lg:col-span-2 h-[640px] rounded-2xl overflow-hidden border border-gray-100 shadow-[0_1px_2px_rgba(16,24,40,0.04),0_1px_3px_rgba(16,24,40,0.06)]">
+          <MapView geofences={geofences} center={mapCenter} drawPoints={drawPoints} onMapClick={handleMapClick} />
+        </div>
       </div>
     </div>
   )
@@ -227,7 +240,7 @@ function SecondaryButtonSmall({ onClick, disabled, label }: { onClick: () => voi
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="text-xs px-2.5 py-1 rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed"
+      className="text-xs font-medium px-2.5 py-1.5 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
     >
       {label}
     </button>
