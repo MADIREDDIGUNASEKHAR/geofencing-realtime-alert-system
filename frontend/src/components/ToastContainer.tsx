@@ -38,8 +38,12 @@ export default function ToastContainer() {
         return (
           <div
             key={t._id}
-            className={`animate-toast-in relative overflow-hidden rounded-2xl shadow-lg shadow-black/10 p-4 text-white ${
-              isRestricted ? 'bg-gradient-to-br from-red-600 to-red-700' : t.event_type === 'entry' ? 'bg-gradient-to-br from-amber-500 to-amber-600' : 'bg-gradient-to-br from-slate-700 to-slate-800'
+            className={`animate-toast-in relative overflow-hidden rounded-2xl border border-white/20 backdrop-blur-xl shadow-lg shadow-black/10 p-4 text-white ${
+              isRestricted
+                ? 'bg-gradient-to-br from-red-600/95 to-red-700/95'
+                : t.event_type === 'entry'
+                  ? 'bg-gradient-to-br from-amber-500/95 to-amber-600/95'
+                  : 'bg-gradient-to-br from-slate-700/95 to-slate-800/95'
             }`}
           >
             <button

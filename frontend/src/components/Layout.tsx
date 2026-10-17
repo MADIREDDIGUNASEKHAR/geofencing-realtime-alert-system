@@ -16,16 +16,16 @@ export default function Layout() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <header className="bg-white/80 backdrop-blur-md border-b border-gray-200/80 sticky top-0 z-[900] shadow-sm">
+      <header className="bg-white/50 backdrop-blur-xl border-b border-white/60 sticky top-0 z-[900] shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
         <div className="max-w-7xl mx-auto px-4 flex items-center justify-between h-16">
           <div className="flex items-center gap-8">
             <NavLink to="/" className="flex items-center gap-2.5 group">
               <span className="flex items-center justify-center h-9 w-9 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-sm shadow-blue-600/30 transition-transform group-hover:scale-105">
                 <MapPinned className="h-5 w-5" strokeWidth={2.25} />
               </span>
-              <span className="font-bold text-gray-900 tracking-tight text-[15px] leading-none">
+              <span className="font-bold text-foreground tracking-tight text-[15px] leading-none">
                 Geofencing
-                <span className="block text-[11px] font-medium text-gray-400 tracking-wide">
+                <span className="block text-[11px] font-medium text-muted-foreground tracking-wide">
                   &amp; Vehicle Tracking
                 </span>
               </span>
@@ -41,9 +41,7 @@ export default function Layout() {
                     end={item.end}
                     className={({ isActive }) =>
                       `flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                        isActive
-                          ? 'bg-blue-50 text-blue-700'
-                          : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
+                        isActive ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:text-foreground hover:bg-white/60'
                       }`
                     }
                   >
@@ -56,7 +54,7 @@ export default function Layout() {
           </div>
 
           <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-600">
+            <div className="flex items-center gap-1.5 rounded-full border border-white/60 bg-white/50 backdrop-blur-xl px-3 py-1.5 text-xs font-medium text-muted-foreground">
               <span className="relative flex h-2 w-2">
                 {status === 'open' && (
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
@@ -69,7 +67,7 @@ export default function Layout() {
               </span>
               {status === 'open' ? 'Live' : status === 'connecting' ? 'Connecting…' : 'Disconnected'}
             </div>
-            <div className="flex items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-600">
+            <div className="flex items-center gap-1.5 rounded-full bg-white/50 backdrop-blur-xl border border-white/60 px-3 py-1.5 text-xs font-medium text-muted-foreground">
               <BellRing className="h-3.5 w-3.5" />
               {feed.length}
             </div>

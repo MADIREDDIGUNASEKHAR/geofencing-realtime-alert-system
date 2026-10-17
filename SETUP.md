@@ -69,7 +69,7 @@ cd frontend
 cp .env.example .env
 npm install
 npm run dev
-```
+```00
 
 Vite serves the dev server on `http://localhost:5173` and proxies API calls to
 `VITE_API_BASE_URL` (default `http://localhost:8080`).

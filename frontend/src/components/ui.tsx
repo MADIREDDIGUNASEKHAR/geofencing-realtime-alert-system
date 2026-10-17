@@ -1,10 +1,22 @@
-import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from 'react'
-import { Inbox, type LucideIcon } from 'lucide-react'
+import type { ReactNode } from 'react'
+import { cn } from 'cn'
+import { Inbox } from 'lucide-react'
+import { Button as ShadButton, buttonVariants } from './ui/button'
+import { Input as ShadInput } from './ui/input'
+import { Textarea as ShadTextarea } from './ui/textarea'
+import { Label as ShadLabel } from './ui/label'
+import { Badge } from './ui/badge'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select'
+import type { LucideIcon } from 'lucide-react'
+import type { VariantProps } from 'class-variance-authority'
 
 export function Card({ children, className = '' }: { children: ReactNode; className?: string }) {
   return (
     <div
-      className={`bg-white rounded-2xl shadow-[0_1px_2px_rgba(16,24,40,0.04),0_1px_3px_rgba(16,24,40,0.06)] border border-gray-100 p-5 ${className}`}
+      className={cn(
+        'rounded-2xl border border-white/60 bg-card/70 text-card-foreground shadow-[0_1px_2px_rgba(16,24,40,0.04),0_8px_24px_-8px_rgba(16,24,40,0.12)] backdrop-blur-xl p-5',
+        className,
+      )}
     >
       {children}
     </div>
@@ -25,12 +37,12 @@ export function PageHeader({
   return (
     <div className="flex items-start justify-between gap-4 mb-6">
       <div className="flex items-start gap-3.5">
-        <span className="flex items-center justify-center h-11 w-11 shrink-0 rounded-xl bg-blue-50 text-blue-600">
+        <span className="flex items-center justify-center h-11 w-11 shrink-0 rounded-xl bg-primary/10 text-primary backdrop-blur-xl border border-white/40">
           <Icon className="h-5 w-5" strokeWidth={2} />
         </span>
         <div>
-          <h1 className="text-xl font-bold text-gray-900 tracking-tight">{title}</h1>
-          {description && <p className="text-sm text-gray-500 mt-0.5">{description}</p>}
+          <h1 className="text-xl font-bold text-foreground tracking-tight">{title}</h1>
+          {description && <p className="text-sm text-muted-foreground mt-0.5">{description}</p>}
         </div>
       </div>
       {action}
@@ -38,45 +50,93 @@ export function PageHeader({
   )
 }
 
-export function Button({ className = '', ...props }: ButtonHTMLAttributes<HTMLButtonElement>) {
+export function Button({
+  className,
+  variant,
+  size,
+  ...props
+}: React.ComponentProps<'button'> & VariantProps<typeof buttonVariants>) {
   return (
-    <button
-      className={`inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all
-        bg-blue-600 text-white shadow-sm shadow-blue-600/20 hover:bg-blue-700 hover:shadow-md hover:shadow-blue-600/25
-        active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 ${className}`}
+    <ShadButton
+      variant={variant}
+      size={size ?? 'lg'}
+      className={cn('shadow-sm shadow-primary/20', className)}
       {...props}
     />
   )
 }
 
-export function SecondaryButton({ className = '', ...props }: ButtonHTMLAttributes<HTMLButtonElement>) {
+export function SecondaryButton({
+  className,
+  size,
+  ...props
+}: React.ComponentProps<'button'> & Pick<VariantProps<typeof buttonVariants>, 'size'>) {
   return (
-    <button
-      className={`inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all
-        bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 hover:border-gray-300
-        active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 ${className}`}
-      {...props}
-    />
+    <ShadButton variant="outline" size={size ?? 'lg'} className={cn('bg-white/60 backdrop-blur-xl', className)} {...props} />
   )
 }
 
-export function Label({ children }: { children: ReactNode }) {
-  return <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1.5">{children}</label>
+export function Label({ children, className }: { children: ReactNode; className?: string }) {
+  return (
+    <ShadLabel className={cn('text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5', className)}>
+      {children}
+    </ShadLabel>
+  )
 }
 
-const fieldBase =
-  'w-full rounded-xl border border-gray-200 bg-white px-3.5 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 transition-shadow focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-400'
-
-export function Input(props: InputHTMLAttributes<HTMLInputElement>) {
-  return <input {...props} className={`${fieldBase} ${props.className ?? ''}`} />
+export function Input(props: React.ComponentProps<'input'>) {
+  return <ShadInput {...props} className={cn('h-10 rounded-xl bg-white/60 backdrop-blur-sm', props.className)} />
 }
 
-export function Textarea(props: TextareaHTMLAttributes<HTMLTextAreaElement>) {
-  return <textarea {...props} className={`${fieldBase} resize-none ${props.className ?? ''}`} />
+export function Textarea(props: React.ComponentProps<'textarea'>) {
+  return <ShadTextarea {...props} className={cn('rounded-xl bg-white/60 backdrop-blur-sm', props.className)} />
 }
 
-export function Select(props: SelectHTMLAttributes<HTMLSelectElement>) {
-  return <select {...props} className={`${fieldBase} bg-white ${props.className ?? ''}`} />
+export interface SelectFieldOption {
+  value: string
+  label: string
+}
+
+const SELECT_ALL_SENTINEL = '__all__'
+
+/** A simplified, single-component wrapper around Radix Select (via shadcn),
+ * so call sites can pass a plain options array instead of hand-writing the
+ * full multi-part JSX every time. When `options` includes an explicit
+ * `value: ""` entry (e.g. "All vehicles"), empty string is a real, selected,
+ * displayable option, translated to/from a reserved sentinel since Radix
+ * forbids empty item values. Otherwise `value: ""` means "nothing picked
+ * yet" and is passed through as `undefined` so Radix shows the placeholder
+ * instead of appearing blank. */
+export function SelectField({
+  value,
+  onValueChange,
+  placeholder,
+  options,
+  className,
+}: {
+  value: string
+  onValueChange: (value: string) => void
+  placeholder: string
+  options: SelectFieldOption[]
+  className?: string
+}) {
+  const hasEmptyOption = options.some((o) => o.value === '')
+  const radixValue = value === '' ? (hasEmptyOption ? SELECT_ALL_SENTINEL : undefined) : value
+
+  return (
+    <Select value={radixValue} onValueChange={(v) => onValueChange(v === SELECT_ALL_SENTINEL ? '' : v)}>
+      <SelectTrigger className={cn('w-full h-10 rounded-xl bg-white/60 backdrop-blur-sm', className)}>
+        <SelectValue placeholder={placeholder} />
+      </SelectTrigger>
+      <SelectContent className="backdrop-blur-xl bg-popover/95">
+        {options.map((o) => (
+          <SelectItem key={o.value || SELECT_ALL_SENTINEL} value={o.value === '' ? SELECT_ALL_SENTINEL : o.value}>
+            {o.label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  )
 }
 
 export function Spinner({ className = '' }: { className?: string }) {
@@ -90,30 +150,32 @@ export function Spinner({ className = '' }: { className?: string }) {
 
 export function ErrorBanner({ message }: { message: string }) {
   return (
-    <div className="rounded-xl bg-red-50 border border-red-100 text-red-700 text-sm px-4 py-3 flex items-start gap-2">
+    <div className="rounded-xl bg-destructive/10 border border-destructive/20 text-destructive text-sm px-4 py-3">
       {message}
     </div>
   )
 }
 
 export function SuccessBanner({ message }: { message: string }) {
-  return <div className="rounded-xl bg-green-50 border border-green-100 text-green-700 text-sm px-4 py-3">{message}</div>
+  return (
+    <div className="rounded-xl bg-green-500/10 border border-green-500/20 text-green-700 text-sm px-4 py-3">{message}</div>
+  )
 }
 
 export function EmptyState({ message, icon: Icon = Inbox }: { message: string; icon?: LucideIcon }) {
   return (
-    <div className="flex flex-col items-center justify-center text-center py-12 text-gray-400">
-      <Icon className="h-8 w-8 mb-2.5 text-gray-300" strokeWidth={1.5} />
+    <div className="flex flex-col items-center justify-center text-center py-12 text-muted-foreground">
+      <Icon className="h-8 w-8 mb-2.5 text-muted-foreground/50" strokeWidth={1.5} />
       <p className="text-sm max-w-[220px]">{message}</p>
     </div>
   )
 }
 
 const CATEGORY_STYLES: Record<string, string> = {
-  delivery_zone: 'bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-200',
-  restricted_zone: 'bg-red-50 text-red-700 ring-1 ring-inset ring-red-200',
-  toll_zone: 'bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-200',
-  customer_area: 'bg-green-50 text-green-700 ring-1 ring-inset ring-green-200',
+  delivery_zone: 'bg-blue-500/10 text-blue-700 border-blue-500/20',
+  restricted_zone: 'bg-red-500/10 text-red-700 border-red-500/20',
+  toll_zone: 'bg-amber-500/10 text-amber-700 border-amber-500/20',
+  customer_area: 'bg-green-500/10 text-green-700 border-green-500/20',
 }
 
 const CATEGORY_DOT: Record<string, string> = {
@@ -125,45 +187,44 @@ const CATEGORY_DOT: Record<string, string> = {
 
 export function CategoryBadge({ category }: { category: string }) {
   return (
-    <span
-      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${
-        CATEGORY_STYLES[category] ?? 'bg-gray-100 text-gray-600 ring-1 ring-inset ring-gray-200'
-      }`}
+    <Badge
+      variant="outline"
+      className={cn('gap-1.5 font-medium', CATEGORY_STYLES[category] ?? 'bg-muted text-muted-foreground border-border')}
     >
       <span className={`h-1.5 w-1.5 rounded-full ${CATEGORY_DOT[category] ?? 'bg-gray-400'}`} />
       {category.replace(/_/g, ' ')}
-    </span>
+    </Badge>
   )
 }
 
 export function EventTypeBadge({ eventType }: { eventType: string }) {
   const isEntry = eventType === 'entry'
   return (
-    <span
-      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${
-        isEntry
-          ? 'bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-200'
-          : 'bg-slate-100 text-slate-700 ring-1 ring-inset ring-slate-200'
-      }`}
+    <Badge
+      variant="outline"
+      className={cn(
+        'gap-1.5 font-medium',
+        isEntry ? 'bg-amber-500/10 text-amber-700 border-amber-500/20' : 'bg-slate-500/10 text-slate-700 border-slate-500/20',
+      )}
     >
       <span className={`h-1.5 w-1.5 rounded-full ${isEntry ? 'bg-amber-500' : 'bg-slate-500'}`} />
       {eventType}
-    </span>
+    </Badge>
   )
 }
 
 export function StatusBadge({ status }: { status: string }) {
   const isActive = status === 'active'
   return (
-    <span
-      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${
-        isActive
-          ? 'bg-green-50 text-green-700 ring-1 ring-inset ring-green-200'
-          : 'bg-gray-100 text-gray-600 ring-1 ring-inset ring-gray-200'
-      }`}
+    <Badge
+      variant="outline"
+      className={cn(
+        'gap-1.5 font-medium',
+        isActive ? 'bg-green-500/10 text-green-700 border-green-500/20' : 'bg-muted text-muted-foreground border-border',
+      )}
     >
       <span className={`h-1.5 w-1.5 rounded-full ${isActive ? 'bg-green-500' : 'bg-gray-400'}`} />
       {status}
-    </span>
+    </Badge>
   )
 }

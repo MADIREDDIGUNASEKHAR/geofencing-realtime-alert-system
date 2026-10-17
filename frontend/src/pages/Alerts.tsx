@@ -11,11 +11,17 @@ import {
   EventTypeBadge,
   Label,
   PageHeader,
-  Select,
+  SelectField,
   Spinner,
   StatusBadge,
   SuccessBanner,
 } from '../components/ui'
+
+const EVENT_TYPE_OPTIONS: { value: EventType; label: string }[] = [
+  { value: 'entry', label: 'Entry' },
+  { value: 'exit', label: 'Exit' },
+  { value: 'both', label: 'Both' },
+]
 
 export default function Alerts() {
   const [geofences, setGeofences] = useState<Geofence[]>([])
@@ -113,7 +119,7 @@ export default function Alerts() {
 
   if (loading) {
     return (
-      <div className="flex justify-center py-16 text-gray-400">
+      <div className="flex justify-center py-16 text-muted-foreground">
         <Spinner className="h-6 w-6" />
       </div>
     )
@@ -125,40 +131,40 @@ export default function Alerts() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="lg:col-span-1 h-fit">
-          <h2 className="font-semibold text-gray-900 mb-4">Configure alert rule</h2>
+          <h2 className="font-semibold text-foreground mb-4">Configure alert rule</h2>
           {geofences.length === 0 ? (
             <EmptyState icon={BellRing} message="Create a geofence first on the Geofences page." />
           ) : (
             <form onSubmit={handleSubmit} className="space-y-3.5">
               <div>
                 <Label>Geofence</Label>
-                <Select value={geofenceId} onChange={(e) => setGeofenceId(e.target.value)}>
-                  <option value="">Select a geofence…</option>
-                  {geofences.map((g) => (
-                    <option key={g.id} value={g.id}>
-                      {g.name} ({g.category.replace(/_/g, ' ')})
-                    </option>
-                  ))}
-                </Select>
+                <SelectField
+                  value={geofenceId}
+                  onValueChange={setGeofenceId}
+                  placeholder="Select a geofence…"
+                  options={geofences.map((g) => ({ value: g.id, label: `${g.name} (${g.category.replace(/_/g, ' ')})` }))}
+                />
               </div>
               <div>
                 <Label>Vehicle (optional — leave blank for all vehicles)</Label>
-                <Select value={vehicleId} onChange={(e) => setVehicleId(e.target.value)}>
-                  <option value="">All vehicles</option>
-                  {vehicles.map((v) => (
-                    <option key={v.id} value={v.id}>
-                      {v.vehicle_number} — {v.driver_name}
-                    </option>
-                  ))}
-                </Select>
+                <SelectField
+                  value={vehicleId}
+                  onValueChange={setVehicleId}
+                  placeholder="All vehicles"
+                  options={[
+                    { value: '', label: 'All vehicles' },
+                    ...vehicles.map((v) => ({ value: v.id, label: `${v.vehicle_number} — ${v.driver_name}` })),
+                  ]}
+                />
               </div>
               <div>
                 <Label>Event type</Label>
-                <Select value={eventType} onChange={(e) => setEventType(e.target.value as EventType)}>
-                  <option value="entry">Entry</option>
-                  <option value="exit">Exit</option>
-                  <option value="both">Both</option>
-                </Select>
+                <SelectField
+                  value={eventType}
+                  onValueChange={(v) => setEventType(v as EventType)}
+                  placeholder="Event type"
+                  options={EVENT_TYPE_OPTIONS}
+                />
               </div>
 
               {submitError && <ErrorBanner message={submitError} />}
@@ -173,24 +179,22 @@ export default function Alerts() {
 
         <Card className="lg:col-span-2 !p-0 overflow-hidden">
           <div className="flex items-center justify-between gap-3 flex-wrap px-5 pt-5 pb-3">
-            <h2 className="font-semibold text-gray-900">Configured alerts</h2>
+            <h2 className="font-semibold text-foreground">Configured alerts</h2>
             <div className="flex gap-2">
-              <Select value={filterGeofence} onChange={(e) => setFilterGeofence(e.target.value)} className="w-40 !py-1.5 text-xs">
-                <option value="">All geofences</option>
-                {geofences.map((g) => (
-                  <option key={g.id} value={g.id}>
-                    {g.name}
-                  </option>
-                ))}
-              </Select>
-              <Select value={filterVehicle} onChange={(e) => setFilterVehicle(e.target.value)} className="w-40 !py-1.5 text-xs">
-                <option value="">All vehicles</option>
-                {vehicles.map((v) => (
-                  <option key={v.id} value={v.id}>
-                    {v.vehicle_number}
-                  </option>
-                ))}
-              </Select>
+              <SelectField
+                value={filterGeofence}
+                onValueChange={setFilterGeofence}
+                placeholder="All geofences"
+                options={[{ value: '', label: 'All geofences' }, ...geofences.map((g) => ({ value: g.id, label: g.name }))]}
+                className="w-40 h-8 text-xs"
+              />
+              <SelectField
+                value={filterVehicle}
+                onValueChange={setFilterVehicle}
+                placeholder="All vehicles"
+                options={[{ value: '', label: 'All vehicles' }, ...vehicles.map((v) => ({ value: v.id, label: v.vehicle_number }))]}
+                className="w-40 h-8 text-xs"
+              />
             </div>
           </div>
 
@@ -204,7 +208,7 @@ export default function Alerts() {
             <div className="overflow-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wide border-b border-gray-100">
+                  <tr className="text-left text-[11px] font-semibold text-muted-foreground/80 uppercase tracking-wide border-b border-border/60">
                     <th className="py-2.5 px-5">Geofence</th>
                     <th className="py-2.5 pr-2">Vehicle</th>
                     <th className="py-2.5 pr-2">Event</th>
@@ -213,15 +217,15 @@ export default function Alerts() {
                 </thead>
                 <tbody>
                   {alerts.map((a) => (
-                    <tr key={a.alert_id} className="border-b border-gray-50 last:border-0 hover:bg-gray-50/80 transition-colors">
+                    <tr key={a.alert_id} className="border-b border-border/40 last:border-0 hover:bg-muted/40 transition-colors">
                       <td className="py-3 px-5">
                         <div className="flex items-center gap-2">
-                          <span className="font-medium text-gray-900">{a.geofence_name}</span>
+                          <span className="font-medium text-foreground">{a.geofence_name}</span>
                           <CategoryBadge category={geofences.find((g) => g.id === a.geofence_id)?.category ?? ''} />
                         </div>
                       </td>
-                      <td className="py-3 pr-2 text-gray-600">
-                        {a.vehicle_number ?? <span className="text-gray-400">all vehicles</span>}
+                      <td className="py-3 pr-2 text-foreground/80">
+                        {a.vehicle_number ?? <span className="text-muted-foreground">all vehicles</span>}
                       </td>
                       <td className="py-3 pr-2">
                         <EventTypeBadge eventType={a.event_type} />
@@ -240,12 +244,12 @@ export default function Alerts() {
         <Card className="lg:col-span-3 !p-0 overflow-hidden">
           <div className="flex items-center justify-between px-5 pt-5 pb-1">
             <div className="flex items-center gap-2">
-              <ScrollText className="h-4 w-4 text-gray-400" />
-              <h2 className="font-semibold text-gray-900">Alert log</h2>
+              <ScrollText className="h-4 w-4 text-muted-foreground" />
+              <h2 className="font-semibold text-foreground">Alert log</h2>
             </div>
-            {logLoading && <Spinner className="text-gray-400" />}
+            {logLoading && <Spinner className="text-muted-foreground" />}
           </div>
-          <p className="text-xs text-gray-500 px-5 pb-4">
+          <p className="text-xs text-muted-foreground px-5 pb-4">
             Every alert actually dispatched over the real-time channel, so you can catch up on anything missed while
             disconnected. Uses the same filters as above.
           </p>
@@ -261,7 +265,7 @@ export default function Alerts() {
               <div className="overflow-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wide border-b border-gray-100">
+                    <tr className="text-left text-[11px] font-semibold text-muted-foreground/80 uppercase tracking-wide border-b border-border/60">
                       <th className="py-2.5 px-5">Delivered</th>
                       <th className="py-2.5 pr-2">Vehicle</th>
                       <th className="py-2.5 pr-2">Geofence</th>
@@ -271,16 +275,16 @@ export default function Alerts() {
                   </thead>
                   <tbody>
                     {alertLog.map((a) => (
-                      <tr key={a.id} className="border-b border-gray-50 last:border-0 hover:bg-gray-50/80 transition-colors">
-                        <td className="py-3 px-5 whitespace-nowrap text-gray-600">
+                      <tr key={a.id} className="border-b border-border/40 last:border-0 hover:bg-muted/40 transition-colors">
+                        <td className="py-3 px-5 whitespace-nowrap text-foreground/80">
                           <span className="inline-flex items-center gap-1.5">
-                            <Clock className="h-3.5 w-3.5 text-gray-300" />
+                            <Clock className="h-3.5 w-3.5 text-muted-foreground/60" />
                             {new Date(a.delivered_at).toLocaleString()}
                           </span>
                         </td>
                         <td className="py-3 pr-2">
-                          <span className="font-medium text-gray-900">{a.vehicle.vehicle_number}</span>{' '}
-                          <span className="text-gray-400">({a.vehicle.driver_name})</span>
+                          <span className="font-medium text-foreground">{a.vehicle.vehicle_number}</span>{' '}
+                          <span className="text-muted-foreground">({a.vehicle.driver_name})</span>
                         </td>
                         <td className="py-3 pr-2">
                           <div className="flex items-center gap-2">
@@ -290,7 +294,7 @@ export default function Alerts() {
                         <td className="py-3 pr-2">
                           <EventTypeBadge eventType={a.event_type} />
                         </td>
-                        <td className="py-3 pr-5 text-gray-500 font-mono text-xs">
+                        <td className="py-3 pr-5 text-muted-foreground font-mono text-xs">
                           {a.location.latitude.toFixed(5)}, {a.location.longitude.toFixed(5)}
                         </td>
                       </tr>
@@ -298,7 +302,7 @@ export default function Alerts() {
                   </tbody>
                 </table>
               </div>
-              <div className="text-xs text-gray-500 px-5 py-3">
+              <div className="text-xs text-muted-foreground px-5 py-3">
                 Showing {alertLog.length} of {logTotalCount}
               </div>
             </>

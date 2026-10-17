@@ -12,13 +12,15 @@ import {
   Input,
   Label,
   PageHeader,
-  Select,
+  SecondaryButton,
+  SelectField,
   Spinner,
   SuccessBanner,
   Textarea,
 } from '../components/ui'
 
 const CATEGORIES: GeofenceCategory[] = ['delivery_zone', 'restricted_zone', 'toll_zone', 'customer_area']
+const CATEGORY_OPTIONS = CATEGORIES.map((c) => ({ value: c, label: c.replace(/_/g, ' ') }))
 
 export default function Geofences() {
   const [geofences, setGeofences] = useState<Geofence[]>([])
@@ -118,131 +120,129 @@ export default function Geofences() {
     <div>
       <PageHeader icon={Hexagon} title="Geofences" description="Draw boundaries and manage zone categories" />
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <div className="lg:col-span-1 space-y-5">
-        <Card>
-          <h2 className="font-semibold text-gray-900 mb-4">Create geofence</h2>
-          <form onSubmit={handleSubmit} className="space-y-3">
-            <div>
-              <Label>Name</Label>
-              <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Downtown Delivery Zone" />
-            </div>
-            <div>
-              <Label>Description</Label>
-              <Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={2} placeholder="Optional details" />
-            </div>
-            <div>
-              <Label>Category</Label>
-              <Select value={category} onChange={(e) => setCategory(e.target.value as GeofenceCategory)}>
-                {CATEGORIES.map((c) => (
-                  <option key={c} value={c}>
-                    {c.replace(/_/g, ' ')}
-                  </option>
-                ))}
-              </Select>
-            </div>
-
-            <div>
-              <Label>Boundary points ({drawPoints.length})</Label>
-              <p className="text-xs text-gray-500 mb-2">Click the map to add points, in order, around the boundary. At least 3 points are required.</p>
-              {drawPoints.length > 0 && (
-                <ul className="text-xs text-gray-600 mb-2 max-h-24 overflow-auto space-y-0.5">
-                  {drawPoints.map((p, i) => (
-                    <li key={i}>
-                      {i + 1}. {p[0].toFixed(5)}, {p[1].toFixed(5)}
-                    </li>
-                  ))}
-                </ul>
-              )}
-              <div className="flex gap-2">
-                <SecondaryButtonSmall onClick={undoLastPoint} disabled={drawPoints.length === 0} label="Undo point" />
-                <SecondaryButtonSmall onClick={clearDrawing} disabled={drawPoints.length === 0} label="Clear" />
+        <div className="lg:col-span-1 space-y-5">
+          <Card>
+            <h2 className="font-semibold text-foreground mb-4">Create geofence</h2>
+            <form onSubmit={handleSubmit} className="space-y-3">
+              <div>
+                <Label>Name</Label>
+                <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Downtown Delivery Zone" />
               </div>
-            </div>
-
-            <details className="text-xs text-gray-500">
-              <summary className="cursor-pointer select-none">Or paste coordinates as JSON</summary>
-              <div className="mt-2 space-y-2">
+              <div>
+                <Label>Description</Label>
                 <Textarea
-                  value={pastedCoords}
-                  onChange={(e) => setPastedCoords(e.target.value)}
-                  rows={3}
-                  placeholder="[[37.7749,-122.4194],[37.7849,-122.4194],[37.7849,-122.4094]]"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  rows={2}
+                  placeholder="Optional details"
                 />
-                <SecondaryButtonSmall onClick={applyPastedCoords} disabled={!pastedCoords.trim()} label="Use these coordinates" />
               </div>
-            </details>
+              <div>
+                <Label>Category</Label>
+                <SelectField
+                  value={category}
+                  onValueChange={(v) => setCategory(v as GeofenceCategory)}
+                  placeholder="Select category…"
+                  options={CATEGORY_OPTIONS}
+                />
+              </div>
 
-            {submitError && <ErrorBanner message={submitError} />}
-            {submitSuccess && <SuccessBanner message={submitSuccess} />}
+              <div>
+                <Label>Boundary points ({drawPoints.length})</Label>
+                <p className="text-xs text-muted-foreground mb-2">
+                  Click the map to add points, in order, around the boundary. At least 3 points are required.
+                </p>
+                {drawPoints.length > 0 && (
+                  <ul className="text-xs text-muted-foreground mb-2 max-h-24 overflow-auto space-y-0.5">
+                    {drawPoints.map((p, i) => (
+                      <li key={i}>
+                        {i + 1}. {p[0].toFixed(5)}, {p[1].toFixed(5)}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <div className="flex gap-2">
+                  <SecondaryButton type="button" size="sm" onClick={undoLastPoint} disabled={drawPoints.length === 0}>
+                    Undo point
+                  </SecondaryButton>
+                  <SecondaryButton type="button" size="sm" onClick={clearDrawing} disabled={drawPoints.length === 0}>
+                    Clear
+                  </SecondaryButton>
+                </div>
+              </div>
 
-            <Button type="submit" disabled={submitting} className="w-full">
-              {submitting && <Spinner />} Create geofence
-            </Button>
-          </form>
-        </Card>
+              <details className="text-xs text-muted-foreground">
+                <summary className="cursor-pointer select-none">Or paste coordinates as JSON</summary>
+                <div className="mt-2 space-y-2">
+                  <Textarea
+                    value={pastedCoords}
+                    onChange={(e) => setPastedCoords(e.target.value)}
+                    rows={3}
+                    placeholder="[[37.7749,-122.4194],[37.7849,-122.4194],[37.7849,-122.4094]]"
+                  />
+                  <SecondaryButton type="button" size="sm" onClick={applyPastedCoords} disabled={!pastedCoords.trim()}>
+                    Use these coordinates
+                  </SecondaryButton>
+                </div>
+              </details>
 
-        <Card>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="font-semibold text-gray-900">Geofences</h2>
-            <Select value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)} className="w-40 !py-1.5 text-xs">
-              <option value="">All categories</option>
-              {CATEGORIES.map((c) => (
-                <option key={c} value={c}>
-                  {c.replace(/_/g, ' ')}
-                </option>
-              ))}
-            </Select>
-          </div>
-          {loading ? (
-            <div className="flex justify-center py-6 text-gray-400">
-              <Spinner />
+              {submitError && <ErrorBanner message={submitError} />}
+              {submitSuccess && <SuccessBanner message={submitSuccess} />}
+
+              <Button type="submit" disabled={submitting} className="w-full">
+                {submitting && <Spinner />} Create geofence
+              </Button>
+            </form>
+          </Card>
+
+          <Card>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-semibold text-foreground">Geofences</h2>
+              <SelectField
+                value={filterCategory}
+                onValueChange={setFilterCategory}
+                placeholder="All categories"
+                options={[{ value: '', label: 'All categories' }, ...CATEGORY_OPTIONS]}
+                className="w-40 h-8 text-xs"
+              />
             </div>
-          ) : loadError ? (
-            <ErrorBanner message={loadError} />
-          ) : geofences.length === 0 ? (
-            <EmptyState icon={Hexagon} message="No geofences yet. Create one to get started." />
-          ) : (
-            <ul className="space-y-2 max-h-96 overflow-auto">
-              {geofences.map((g) => (
-                <li
-                  key={g.id}
-                  className="flex gap-3 border border-gray-100 rounded-xl p-3 hover:border-gray-200 transition-colors"
-                >
-                  <span className="flex items-center justify-center h-8 w-8 shrink-0 rounded-lg bg-gray-50 text-gray-400">
-                    <MapPin className="h-4 w-4" />
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="font-medium text-sm text-gray-900 truncate">{g.name}</span>
-                      <CategoryBadge category={g.category} />
+            {loading ? (
+              <div className="flex justify-center py-6 text-muted-foreground">
+                <Spinner />
+              </div>
+            ) : loadError ? (
+              <ErrorBanner message={loadError} />
+            ) : geofences.length === 0 ? (
+              <EmptyState icon={Hexagon} message="No geofences yet. Create one to get started." />
+            ) : (
+              <ul className="space-y-2 max-h-96 overflow-auto">
+                {geofences.map((g) => (
+                  <li
+                    key={g.id}
+                    className="flex gap-3 border border-border/60 rounded-xl p-3 hover:border-border hover:bg-muted/40 transition-colors"
+                  >
+                    <span className="flex items-center justify-center h-8 w-8 shrink-0 rounded-lg bg-muted text-muted-foreground">
+                      <MapPin className="h-4 w-4" />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-medium text-sm text-foreground truncate">{g.name}</span>
+                        <CategoryBadge category={g.category} />
+                      </div>
+                      {g.description && <p className="text-xs text-muted-foreground mt-0.5">{g.description}</p>}
+                      <p className="text-[11px] text-muted-foreground/70 mt-1">{g.coordinates.length} points</p>
                     </div>
-                    {g.description && <p className="text-xs text-gray-500 mt-0.5">{g.description}</p>}
-                    <p className="text-[11px] text-gray-400 mt-1">{g.coordinates.length} points</p>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Card>
-      </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
+        </div>
 
-        <div className="lg:col-span-2 h-[640px] rounded-2xl overflow-hidden border border-gray-100 shadow-[0_1px_2px_rgba(16,24,40,0.04),0_1px_3px_rgba(16,24,40,0.06)]">
+        <div className="lg:col-span-2 h-[640px] rounded-2xl overflow-hidden border border-white/60 shadow-[0_1px_2px_rgba(16,24,40,0.04),0_8px_24px_-8px_rgba(16,24,40,0.12)] backdrop-blur-xl">
           <MapView geofences={geofences} center={mapCenter} drawPoints={drawPoints} onMapClick={handleMapClick} />
         </div>
       </div>
     </div>
-  )
-}
-
-function SecondaryButtonSmall({ onClick, disabled, label }: { onClick: () => void; disabled?: boolean; label: string }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      className="text-xs font-medium px-2.5 py-1.5 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-    >
-      {label}
-    </button>
   )
 }

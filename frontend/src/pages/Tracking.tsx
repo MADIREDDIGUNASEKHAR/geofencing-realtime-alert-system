@@ -3,7 +3,7 @@ import { CheckCircle2, MapPin, Navigation } from 'lucide-react'
 import MapView from '../components/MapView'
 import { ApiError, listGeofences, listVehicles, updateVehicleLocation } from '../api/client'
 import type { CurrentGeofenceStatus, Geofence, LatLng, Vehicle } from '../api/types'
-import { Button, Card, EmptyState, ErrorBanner, Input, Label, PageHeader, Select, Spinner, SuccessBanner } from '../components/ui'
+import { Button, Card, EmptyState, ErrorBanner, Input, Label, PageHeader, SelectField, Spinner, SuccessBanner } from '../components/ui'
 
 function nowForInput(): string {
   const d = new Date()
@@ -95,7 +95,7 @@ export default function Tracking() {
 
   if (loading) {
     return (
-      <div className="flex justify-center py-16 text-gray-400">
+      <div className="flex justify-center py-16 text-muted-foreground">
         <Spinner className="h-6 w-6" />
       </div>
     )
@@ -109,23 +109,21 @@ export default function Tracking() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="lg:col-span-1 space-y-4 h-fit">
-          <h2 className="font-semibold text-gray-900">Update vehicle location</h2>
+          <h2 className="font-semibold text-foreground">Update vehicle location</h2>
           {vehicles.length === 0 ? (
             <EmptyState icon={Navigation} message="Register a vehicle first on the Vehicles page." />
           ) : (
             <form onSubmit={handleSubmit} className="space-y-3.5">
               <div>
                 <Label>Vehicle</Label>
-                <Select value={vehicleId} onChange={(e) => setVehicleId(e.target.value)}>
-                  <option value="">Select a vehicle…</option>
-                  {vehicles.map((v) => (
-                    <option key={v.id} value={v.id}>
-                      {v.vehicle_number} — {v.driver_name}
-                    </option>
-                  ))}
-                </Select>
+                <SelectField
+                  value={vehicleId}
+                  onValueChange={setVehicleId}
+                  placeholder="Select a vehicle…"
+                  options={vehicles.map((v) => ({ value: v.id, label: `${v.vehicle_number} — ${v.driver_name}` }))}
+                />
               </div>
-              <p className="text-xs text-gray-500 flex items-center gap-1.5">
+              <p className="text-xs text-muted-foreground flex items-center gap-1.5">
                 <MapPin className="h-3.5 w-3.5 shrink-0" />
                 Click anywhere on the map to set the location, or type coordinates directly.
               </p>
@@ -153,8 +151,8 @@ export default function Tracking() {
           )}
 
           {result && (
-            <div className="border-t border-gray-100 pt-4">
-              <h3 className="font-medium text-gray-900 text-sm mb-2.5">Currently inside</h3>
+            <div className="border-t border-border/60 pt-4">
+              <h3 className="font-medium text-foreground text-sm mb-2.5">Currently inside</h3>
               {result.length === 0 ? (
                 <SuccessBanner message="Location updated. Vehicle is not inside any geofence." />
               ) : (
@@ -162,7 +160,7 @@ export default function Tracking() {
                   {result.map((g) => (
                     <li
                       key={g.geofence_id}
-                      className="flex items-center gap-2 text-sm bg-green-50 border border-green-100 text-green-700 rounded-xl px-3 py-2"
+                      className="flex items-center gap-2 text-sm bg-green-500/10 border border-green-500/20 text-green-700 rounded-xl px-3 py-2"
                     >
                       <CheckCircle2 className="h-4 w-4 shrink-0" />
                       {g.geofence_name}
@@ -174,7 +172,7 @@ export default function Tracking() {
           )}
         </Card>
 
-        <div className="lg:col-span-2 h-[640px] rounded-2xl overflow-hidden border border-gray-100 shadow-[0_1px_2px_rgba(16,24,40,0.04),0_1px_3px_rgba(16,24,40,0.06)]">
+        <div className="lg:col-span-2 h-[640px] rounded-2xl overflow-hidden border border-white/60 shadow-[0_1px_2px_rgba(16,24,40,0.04),0_8px_24px_-8px_rgba(16,24,40,0.12)] backdrop-blur-xl">
           <MapView geofences={geofences} center={mapCenter} pickedPoint={pickedPoint} onMapClick={handleMapClick} />
         </div>
       </div>

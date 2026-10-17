@@ -56,7 +56,7 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="flex justify-center py-16 text-gray-400">
+      <div className="flex justify-center py-16 text-muted-foreground">
         <Spinner className="h-6 w-6" />
       </div>
     )
@@ -69,12 +69,12 @@ export default function Dashboard() {
       <PageHeader icon={LayoutDashboard} title="Dashboard" description="Live overview of your fleet and geofences" />
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <StatCard icon={Hexagon} iconColor="text-blue-600 bg-blue-50" label="Geofences" value={geofences.length} />
-        <StatCard icon={Truck} iconColor="text-indigo-600 bg-indigo-50" label="Vehicles" value={vehicles.length} />
-        <StatCard icon={Radio} iconColor="text-violet-600 bg-violet-50" label="Tracked now" value={vehicleMarkers.length} />
+        <StatCard icon={Hexagon} iconColor="text-blue-600 bg-blue-500/10" label="Geofences" value={geofences.length} />
+        <StatCard icon={Truck} iconColor="text-indigo-600 bg-indigo-500/10" label="Vehicles" value={vehicles.length} />
+        <StatCard icon={Radio} iconColor="text-violet-600 bg-violet-500/10" label="Tracked now" value={vehicleMarkers.length} />
         <StatCard
           icon={BellRing}
-          iconColor="text-green-600 bg-green-50"
+          iconColor="text-green-600 bg-green-500/10"
           label="Live alerts"
           value={feed.length}
           accent={status === 'open'}
@@ -82,14 +82,14 @@ export default function Dashboard() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 h-[560px] rounded-2xl overflow-hidden border border-gray-100 shadow-[0_1px_2px_rgba(16,24,40,0.04),0_1px_3px_rgba(16,24,40,0.06)]">
+        <div className="lg:col-span-2 h-[560px] rounded-2xl overflow-hidden border border-white/60 shadow-[0_1px_2px_rgba(16,24,40,0.04),0_8px_24px_-8px_rgba(16,24,40,0.12)] backdrop-blur-xl">
           <MapView geofences={geofences} vehicles={vehicleMarkers} center={mapCenter} />
         </div>
 
         <Card className="lg:col-span-1 h-[560px] flex flex-col !p-0 overflow-hidden">
-          <div className="flex items-center gap-2 px-5 py-4 border-b border-gray-100">
-            <BellRing className="h-4 w-4 text-gray-400" />
-            <h2 className="font-semibold text-gray-900 text-sm">Live alerts feed</h2>
+          <div className="flex items-center gap-2 px-5 py-4 border-b border-border/60">
+            <BellRing className="h-4 w-4 text-muted-foreground" />
+            <h2 className="font-semibold text-foreground text-sm">Live alerts feed</h2>
           </div>
           <div className="flex-1 overflow-auto px-5 py-4">
             {feed.length === 0 ? (
@@ -101,24 +101,24 @@ export default function Dashboard() {
                   return (
                     <li
                       key={`${a.event_id}`}
-                      className="animate-fade-in-up flex gap-3 border border-gray-100 rounded-xl p-3 text-sm hover:border-gray-200 transition-colors"
+                      className="animate-fade-in-up flex gap-3 border border-border/60 rounded-xl p-3 text-sm hover:border-border hover:bg-muted/30 transition-colors"
                     >
                       <span
                         className={`flex items-center justify-center h-8 w-8 shrink-0 rounded-lg ${
-                          a.geofence.category === 'restricted_zone' ? 'bg-red-50 text-red-600' : 'bg-amber-50 text-amber-600'
+                          a.geofence.category === 'restricted_zone' ? 'bg-red-500/10 text-red-600' : 'bg-amber-500/10 text-amber-600'
                         }`}
                       >
                         <Icon className="h-4 w-4" />
                       </span>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center justify-between gap-2">
-                          <span className="font-medium text-gray-900 truncate">{a.vehicle.vehicle_number}</span>
+                          <span className="font-medium text-foreground truncate">{a.vehicle.vehicle_number}</span>
                           <EventTypeBadge eventType={a.event_type} />
                         </div>
-                        <div className="text-gray-500 text-xs mt-0.5 truncate">
+                        <div className="text-muted-foreground text-xs mt-0.5 truncate">
                           {a.geofence.geofence_name} &middot; {a.geofence.category.replace(/_/g, ' ')}
                         </div>
-                        <div className="text-gray-400 text-[11px] mt-1">{new Date(a.timestamp).toLocaleString()}</div>
+                        <div className="text-muted-foreground/70 text-[11px] mt-1">{new Date(a.timestamp).toLocaleString()}</div>
                       </div>
                     </li>
                   )
@@ -148,12 +148,12 @@ function StatCard({
   return (
     <Card>
       <div className="flex items-center justify-between">
-        <span className="text-xs font-medium text-gray-500">{label}</span>
+        <span className="text-xs font-medium text-muted-foreground">{label}</span>
         <span className={`flex items-center justify-center h-8 w-8 rounded-lg ${iconColor}`}>
           <Icon className="h-4 w-4" strokeWidth={2} />
         </span>
       </div>
-      <div className={`text-3xl font-bold mt-2 tracking-tight ${accent ? 'text-green-600' : 'text-gray-900'}`}>{value}</div>
+      <div className={`text-3xl font-bold mt-2 tracking-tight ${accent ? 'text-green-600' : 'text-foreground'}`}>{value}</div>
     </Card>
   )
 }

@@ -102,7 +102,7 @@ export default function Vehicles() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="lg:col-span-1 h-fit">
-          <h2 className="font-semibold text-gray-900 mb-4">Register vehicle</h2>
+          <h2 className="font-semibold text-foreground mb-4">Register vehicle</h2>
           <form onSubmit={handleSubmit} className="space-y-3.5">
             <div>
               <Label>Vehicle number</Label>
@@ -131,9 +131,9 @@ export default function Vehicles() {
         </Card>
 
         <Card className="lg:col-span-2 !p-0 overflow-hidden">
-          <h2 className="font-semibold text-gray-900 px-5 pt-5 pb-3">Registered vehicles</h2>
+          <h2 className="font-semibold text-foreground px-5 pt-5 pb-3">Registered vehicles</h2>
           {loading ? (
-            <div className="flex justify-center py-8 text-gray-400">
+            <div className="flex justify-center py-8 text-muted-foreground">
               <Spinner />
             </div>
           ) : loadError ? (
@@ -146,7 +146,7 @@ export default function Vehicles() {
             <div className="overflow-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wide border-b border-gray-100">
+                  <tr className="text-left text-[11px] font-semibold text-muted-foreground/80 uppercase tracking-wide border-b border-border/60">
                     <th className="py-2.5 px-5">Vehicle</th>
                     <th className="py-2.5 pr-2">Driver</th>
                     <th className="py-2.5 pr-2">Type</th>
@@ -157,25 +157,25 @@ export default function Vehicles() {
                 </thead>
                 <tbody>
                   {vehicles.map((v) => (
-                    <tr key={v.id} className="border-b border-gray-50 last:border-0 hover:bg-gray-50/80 transition-colors">
+                    <tr key={v.id} className="border-b border-border/40 last:border-0 hover:bg-muted/40 transition-colors">
                       <td className="py-3 px-5">
                         <div className="flex items-center gap-2.5">
-                          <span className="flex items-center justify-center h-8 w-8 rounded-lg bg-indigo-50 text-indigo-600 shrink-0">
+                          <span className="flex items-center justify-center h-8 w-8 rounded-lg bg-indigo-500/10 text-indigo-600 shrink-0">
                             <Truck className="h-4 w-4" />
                           </span>
-                          <span className="font-medium text-gray-900">{v.vehicle_number}</span>
+                          <span className="font-medium text-foreground">{v.vehicle_number}</span>
                         </div>
                       </td>
-                      <td className="py-3 pr-2 text-gray-600">{v.driver_name}</td>
-                      <td className="py-3 pr-2 text-gray-600 capitalize">{v.vehicle_type}</td>
-                      <td className="py-3 pr-2 text-gray-500">{v.phone}</td>
+                      <td className="py-3 pr-2 text-foreground/80">{v.driver_name}</td>
+                      <td className="py-3 pr-2 text-foreground/80 capitalize">{v.vehicle_type}</td>
+                      <td className="py-3 pr-2 text-muted-foreground">{v.phone}</td>
                       <td className="py-3 pr-2">
                         <StatusBadge status={v.status} />
                       </td>
                       <td className="py-3 pr-5 text-right">
                         <button
                           onClick={() => viewLocation(v.id)}
-                          className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-700 text-xs font-medium"
+                          className="inline-flex items-center gap-1 text-primary hover:opacity-80 text-xs font-medium"
                         >
                           <MapPinCheck className="h-3.5 w-3.5" /> Location
                         </button>
@@ -188,8 +188,8 @@ export default function Vehicles() {
           )}
 
           {selectedId && (
-            <div className="mx-5 mb-5 mt-1 rounded-xl bg-gray-50 border border-gray-100 p-4">
-              <h3 className="font-medium text-gray-900 mb-2 text-sm">Current status</h3>
+            <div className="mx-5 mb-5 mt-1 rounded-xl bg-muted/50 border border-border/60 p-4">
+              <h3 className="font-medium text-foreground mb-2 text-sm">Current status</h3>
               {locationLoading ? (
                 <Spinner />
               ) : locationError ? (
@@ -197,22 +197,23 @@ export default function Vehicles() {
               ) : selectedLocation ? (
                 <div className="text-sm space-y-1.5">
                   <div>
-                    <span className="text-gray-500">Vehicle:</span>{' '}
-                    <span className="font-medium text-gray-900">{selectedLocation.vehicle_number}</span>
+                    <span className="text-muted-foreground">Vehicle:</span>{' '}
+                    <span className="font-medium text-foreground">{selectedLocation.vehicle_number}</span>
                   </div>
                   {selectedLocation.current_location ? (
                     <div>
-                      <span className="text-gray-500">Location:</span> {selectedLocation.current_location.latitude.toFixed(5)},{' '}
+                      <span className="text-muted-foreground">Location:</span>{' '}
+                      {selectedLocation.current_location.latitude.toFixed(5)},{' '}
                       {selectedLocation.current_location.longitude.toFixed(5)} at{' '}
                       {new Date(selectedLocation.current_location.timestamp).toLocaleString()}
                     </div>
                   ) : (
-                    <div className="text-gray-400">No location reported yet.</div>
+                    <div className="text-muted-foreground/70">No location reported yet.</div>
                   )}
                   <div>
-                    <span className="text-gray-500">Inside geofences:</span>{' '}
+                    <span className="text-muted-foreground">Inside geofences:</span>{' '}
                     {selectedLocation.current_geofences.length === 0 ? (
-                      <span className="text-gray-400">none</span>
+                      <span className="text-muted-foreground/70">none</span>
                     ) : (
                       <span className="inline-flex flex-wrap gap-1.5 align-middle">
                         {selectedLocation.current_geofences.map((g) => (

@@ -10,7 +10,7 @@ import {
   Input,
   Label,
   PageHeader,
-  Select,
+  SelectField,
   SecondaryButton,
   Spinner,
 } from '../components/ui'
@@ -85,28 +85,24 @@ export default function History() {
       <PageHeader icon={HistoryIcon} title="History" description="Every recorded geofence entry and exit event" />
 
       <Card className="!p-0 overflow-hidden">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 p-5 border-b border-gray-100">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 p-5 border-b border-border/60">
           <div>
             <Label>Vehicle</Label>
-            <Select value={vehicleId} onChange={(e) => setVehicleId(e.target.value)}>
-              <option value="">All vehicles</option>
-              {vehicles.map((v) => (
-                <option key={v.id} value={v.id}>
-                  {v.vehicle_number}
-                </option>
-              ))}
-            </Select>
+            <SelectField
+              value={vehicleId}
+              onValueChange={setVehicleId}
+              placeholder="All vehicles"
+              options={[{ value: '', label: 'All vehicles' }, ...vehicles.map((v) => ({ value: v.id, label: v.vehicle_number }))]}
+            />
           </div>
           <div>
             <Label>Geofence</Label>
-            <Select value={geofenceId} onChange={(e) => setGeofenceId(e.target.value)}>
-              <option value="">All geofences</option>
-              {geofences.map((g) => (
-                <option key={g.id} value={g.id}>
-                  {g.name}
-                </option>
-              ))}
-            </Select>
+            <SelectField
+              value={geofenceId}
+              onValueChange={setGeofenceId}
+              placeholder="All geofences"
+              options={[{ value: '', label: 'All geofences' }, ...geofences.map((g) => ({ value: g.id, label: g.name }))]}
+            />
           </div>
           <div>
             <Label>Start date</Label>
@@ -124,7 +120,7 @@ export default function History() {
         </div>
 
         {loading && violations.length === 0 ? (
-          <div className="flex justify-center py-8 text-gray-400">
+          <div className="flex justify-center py-8 text-muted-foreground">
             <Spinner />
           </div>
         ) : error ? (
@@ -138,7 +134,7 @@ export default function History() {
             <div className="overflow-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wide border-b border-gray-100">
+                  <tr className="text-left text-[11px] font-semibold text-muted-foreground/80 uppercase tracking-wide border-b border-border/60">
                     <th className="py-2.5 px-5">Time</th>
                     <th className="py-2.5 pr-2">Vehicle</th>
                     <th className="py-2.5 pr-2">Geofence</th>
@@ -148,19 +144,19 @@ export default function History() {
                 </thead>
                 <tbody>
                   {violations.map((v) => (
-                    <tr key={v.id} className="border-b border-gray-50 last:border-0 hover:bg-gray-50/80 transition-colors">
-                      <td className="py-3 px-5 whitespace-nowrap text-gray-600">
+                    <tr key={v.id} className="border-b border-border/40 last:border-0 hover:bg-muted/40 transition-colors">
+                      <td className="py-3 px-5 whitespace-nowrap text-foreground/80">
                         <span className="inline-flex items-center gap-1.5">
-                          <Clock className="h-3.5 w-3.5 text-gray-300" />
+                          <Clock className="h-3.5 w-3.5 text-muted-foreground/60" />
                           {new Date(v.timestamp).toLocaleString()}
                         </span>
                       </td>
-                      <td className="py-3 pr-2 font-medium text-gray-900">{v.vehicle_number}</td>
-                      <td className="py-3 pr-2 text-gray-600">{v.geofence_name}</td>
+                      <td className="py-3 pr-2 font-medium text-foreground">{v.vehicle_number}</td>
+                      <td className="py-3 pr-2 text-foreground/80">{v.geofence_name}</td>
                       <td className="py-3 pr-2">
                         <EventTypeBadge eventType={v.event_type} />
                       </td>
-                      <td className="py-3 pr-5 text-gray-500 font-mono text-xs">
+                      <td className="py-3 pr-5 text-muted-foreground font-mono text-xs">
                         {v.latitude.toFixed(5)}, {v.longitude.toFixed(5)}
                       </td>
                     </tr>
@@ -168,7 +164,7 @@ export default function History() {
                 </tbody>
               </table>
             </div>
-            <div className="flex items-center justify-between px-5 py-4 border-t border-gray-100 text-xs text-gray-500">
+            <div className="flex items-center justify-between px-5 py-4 border-t border-border/60 text-xs text-muted-foreground">
               <span>
                 Showing {violations.length} of {totalCount}
               </span>
