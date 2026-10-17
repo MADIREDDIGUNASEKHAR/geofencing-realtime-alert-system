@@ -82,14 +82,9 @@ export default function MapView({
     <MapContainer center={center} zoom={zoom} scrollWheelZoom className="z-0">
       <TileLayer
         attribution="&copy; Esri"
-        url="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}"
+        url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}"
         maxZoom={19}
-        maxNativeZoom={16}
-      />
-      <TileLayer
-        url="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}"
-        maxZoom={19}
-        maxNativeZoom={16}
+        maxNativeZoom={19}
       />
       <ClickCapture onClick={onMapClick} />
 

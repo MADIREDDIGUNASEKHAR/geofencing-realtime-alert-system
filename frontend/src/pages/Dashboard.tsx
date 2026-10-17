@@ -86,8 +86,8 @@ export default function Dashboard() {
           ))}
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <Skeleton className="lg:col-span-2 h-[560px] rounded-2xl" />
-          <Card className="lg:col-span-1 h-[560px] space-y-2.5">
+          <Skeleton className="lg:col-span-2 h-[340px] sm:h-[440px] lg:h-[560px] rounded-2xl" />
+          <Card className="lg:col-span-1 h-[340px] sm:h-[440px] lg:h-[560px] space-y-2.5">
             {Array.from({ length: 4 }).map((_, i) => (
               <Skeleton key={i} className="h-16 w-full" />
             ))}
@@ -130,11 +130,11 @@ export default function Dashboard() {
       </motion.div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 h-[560px] rounded-2xl overflow-hidden border border-white/60 shadow-[0_1px_2px_rgba(16,24,40,0.04),0_8px_24px_-8px_rgba(16,24,40,0.12)] backdrop-blur-xl">
+        <div className="lg:col-span-2 h-[340px] sm:h-[440px] lg:h-[560px] rounded-2xl overflow-hidden border border-white/60 shadow-[0_1px_2px_rgba(16,24,40,0.04),0_8px_24px_-8px_rgba(16,24,40,0.12)] backdrop-blur-xl">
           <MapView geofences={geofences} vehicles={vehicleMarkers} center={mapCenter} />
         </div>
 
-        <Card className="lg:col-span-1 h-[560px] flex flex-col !p-0 overflow-hidden">
+        <Card className="lg:col-span-1 h-[340px] sm:h-[440px] lg:h-[560px] flex flex-col !p-0 overflow-hidden">
           <div className="flex items-center gap-2 px-5 py-4 border-b border-border/60">
             <BellRing className="h-4 w-4 text-muted-foreground" />
             <h2 className="font-semibold text-foreground text-sm">Live alerts feed</h2>

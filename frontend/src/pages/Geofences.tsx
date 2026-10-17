@@ -122,7 +122,7 @@ export default function Geofences() {
     <div>
       <PageHeader icon={Hexagon} title="Geofences" description="Draw boundaries and manage zone categories" />
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-1 space-y-5">
+        <div className="order-2 lg:order-none lg:col-span-1 space-y-5">
           <Card>
             <h2 className="font-semibold text-foreground mb-4">Create geofence</h2>
             <form onSubmit={handleSubmit} className="space-y-3">
@@ -246,7 +246,7 @@ export default function Geofences() {
           </Card>
         </div>
 
-        <div className="lg:col-span-2 h-[640px] rounded-2xl overflow-hidden border border-white/60 shadow-[0_1px_2px_rgba(16,24,40,0.04),0_8px_24px_-8px_rgba(16,24,40,0.12)] backdrop-blur-xl">
+        <div className="order-1 lg:order-none lg:col-span-2 h-[300px] sm:h-[420px] lg:h-[640px] rounded-2xl overflow-hidden border border-white/60 shadow-[0_1px_2px_rgba(16,24,40,0.04),0_8px_24px_-8px_rgba(16,24,40,0.12)] backdrop-blur-xl">
           <MapView geofences={geofences} center={mapCenter} drawPoints={drawPoints} onMapClick={handleMapClick} />
         </div>
       </div>

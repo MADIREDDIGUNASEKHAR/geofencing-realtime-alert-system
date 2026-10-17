@@ -181,20 +181,20 @@ export default function Alerts() {
         <Card className="lg:col-span-2 !p-0 overflow-hidden">
           <div className="flex items-center justify-between gap-3 flex-wrap px-5 pt-5 pb-3">
             <h2 className="font-semibold text-foreground">Configured alerts</h2>
-            <div className="flex gap-2">
+            <div className="flex gap-2 w-full sm:w-auto">
               <SelectField
                 value={filterGeofence}
                 onValueChange={setFilterGeofence}
                 placeholder="All geofences"
                 options={[{ value: '', label: 'All geofences' }, ...geofences.map((g) => ({ value: g.id, label: g.name }))]}
-                className="w-40 h-8 text-xs"
+                className="flex-1 sm:w-40 sm:flex-none h-8 text-xs"
               />
               <SelectField
                 value={filterVehicle}
                 onValueChange={setFilterVehicle}
                 placeholder="All vehicles"
                 options={[{ value: '', label: 'All vehicles' }, ...vehicles.map((v) => ({ value: v.id, label: v.vehicle_number }))]}
-                className="w-40 h-8 text-xs"
+                className="flex-1 sm:w-40 sm:flex-none h-8 text-xs"
               />
             </div>
           </div>
