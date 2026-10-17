@@ -62,6 +62,13 @@ export default function MapView({
             weight: g.id === highlightGeofenceId ? 4 : 2,
             fillOpacity: g.id === highlightGeofenceId ? 0.3 : 0.15,
           }}
+          eventHandlers={{
+            // Leaflet stops a vector layer's click from reaching the map's
+            // own click handler, so forward it manually — otherwise picking
+            // a location or drawing a boundary point on top of an existing
+            // geofence silently does nothing but open its popup.
+            click: (e) => onMapClick?.(e.latlng.lat, e.latlng.lng),
+          }}
         >
           <Popup>
             <div className="text-sm">
