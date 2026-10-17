@@ -10,16 +10,20 @@ const CATEGORY_COLORS: Record<string, string> = {
 }
 
 // A small custom pin (instead of Leaflet's default marker) so vehicles read
-// clearly against colored geofence polygons on the map.
+// clearly against colored geofence polygons on the map. The pulsing ring
+// behind it reads as "live tracking" rather than a static placemark.
 const vehicleIcon = L.divIcon({
   className: '',
-  html: `<div style="
-    width:30px;height:30px;border-radius:9999px;
-    background:linear-gradient(135deg,#6366f1,#4338ca);
-    display:flex;align-items:center;justify-content:center;
-    box-shadow:0 2px 8px rgba(67,56,202,0.45);border:2.5px solid white;
-    font-size:14px;line-height:1;
-  ">🚚</div>`,
+  html: `<div style="position:relative;width:30px;height:30px;">
+    <span class="marker-pulse-ring" style="background:#4338ca;"></span>
+    <div style="
+      position:relative;width:30px;height:30px;border-radius:9999px;
+      background:linear-gradient(135deg,#6366f1,#4338ca);
+      display:flex;align-items:center;justify-content:center;
+      box-shadow:0 2px 10px rgba(67,56,202,0.5);border:2.5px solid white;
+      font-size:14px;line-height:1;
+    ">🚚</div>
+  </div>`,
   iconSize: [30, 30],
   iconAnchor: [15, 15],
   popupAnchor: [0, -15],
@@ -77,8 +81,15 @@ export default function MapView({
   return (
     <MapContainer center={center} zoom={zoom} scrollWheelZoom className="z-0">
       <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        attribution="&copy; Esri"
+        url="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}"
+        maxZoom={19}
+        maxNativeZoom={16}
+      />
+      <TileLayer
+        url="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}"
+        maxZoom={19}
+        maxNativeZoom={16}
       />
       <ClickCapture onClick={onMapClick} />
 
@@ -100,7 +111,11 @@ export default function MapView({
           }}
         >
           <Popup>
-            <div className="text-sm min-w-[160px]">
+            <div className="text-sm min-w-[170px] -m-1">
+              <div
+                className="h-1 -mt-1 -mx-1 mb-2 rounded-t"
+                style={{ background: CATEGORY_COLORS[g.category] ?? '#6b7280' }}
+              />
               <div className="font-semibold text-gray-900">{g.name}</div>
               <div className="text-gray-400 text-xs capitalize mt-0.5">{g.category.replace(/_/g, ' ')}</div>
               {g.description && <div className="mt-1.5 text-gray-600">{g.description}</div>}

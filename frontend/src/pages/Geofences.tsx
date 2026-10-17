@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
+import { motion } from 'motion/react'
 import { Hexagon, MapPin } from 'lucide-react'
 import MapView from '../components/MapView'
 import { ApiError, createGeofence, listGeofences } from '../api/client'
@@ -14,6 +15,7 @@ import {
   PageHeader,
   SecondaryButton,
   SelectField,
+  Skeleton,
   Spinner,
   SuccessBanner,
   Textarea,
@@ -207,8 +209,10 @@ export default function Geofences() {
               />
             </div>
             {loading ? (
-              <div className="flex justify-center py-6 text-muted-foreground">
-                <Spinner />
+              <div className="space-y-2">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <Skeleton key={i} className="h-16 w-full" />
+                ))}
               </div>
             ) : loadError ? (
               <ErrorBanner message={loadError} />
@@ -216,9 +220,12 @@ export default function Geofences() {
               <EmptyState icon={Hexagon} message="No geofences yet. Create one to get started." />
             ) : (
               <ul className="space-y-2 max-h-96 overflow-auto">
-                {geofences.map((g) => (
-                  <li
+                {geofences.map((g, i) => (
+                  <motion.li
                     key={g.id}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.25, delay: i * 0.04 }}
                     className="flex gap-3 border border-border/60 rounded-xl p-3 hover:border-border hover:bg-muted/40 transition-colors"
                   >
                     <span className="flex items-center justify-center h-8 w-8 shrink-0 rounded-lg bg-muted text-muted-foreground">
@@ -232,7 +239,7 @@ export default function Geofences() {
                       {g.description && <p className="text-xs text-muted-foreground mt-0.5">{g.description}</p>}
                       <p className="text-[11px] text-muted-foreground/70 mt-1">{g.coordinates.length} points</p>
                     </div>
-                  </li>
+                  </motion.li>
                 ))}
               </ul>
             )}

@@ -1,6 +1,7 @@
-import type { ReactNode } from 'react'
+import { useEffect, type ReactNode } from 'react'
 import { cn } from 'cn'
 import { Inbox } from 'lucide-react'
+import { animate, motion, useMotionValue, useTransform } from 'motion/react'
 import { Button as ShadButton, buttonVariants } from './ui/button'
 import { Input as ShadInput } from './ui/input'
 import { Textarea as ShadTextarea } from './ui/textarea'
@@ -10,16 +11,44 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import type { LucideIcon } from 'lucide-react'
 import type { VariantProps } from 'class-variance-authority'
 
-export function Card({ children, className = '' }: { children: ReactNode; className?: string }) {
+export function Card({
+  children,
+  className = '',
+  hoverable = false,
+}: {
+  children: ReactNode
+  className?: string
+  hoverable?: boolean
+}) {
   return (
-    <div
+    <motion.div
       className={cn(
         'rounded-2xl border border-white/60 bg-card/70 text-card-foreground shadow-[0_1px_2px_rgba(16,24,40,0.04),0_8px_24px_-8px_rgba(16,24,40,0.12)] backdrop-blur-xl p-5',
         className,
       )}
+      whileHover={hoverable ? { y: -3, boxShadow: '0 16px 36px -8px rgba(16,24,40,0.18)' } : undefined}
+      transition={{ duration: 0.2, ease: 'easeOut' }}
     >
       {children}
-    </div>
+    </motion.div>
+  )
+}
+
+/** A number that smoothly counts up/down to its new value instead of
+ * snapping — small detail, but it's the difference between a dashboard that
+ * feels alive and one that just displays data. */
+export function AnimatedNumber({ value, className }: { value: number; className?: string }) {
+  const motionValue = useMotionValue(0)
+  const rounded = useTransform(motionValue, (latest) => Math.round(latest).toLocaleString())
+
+  useEffect(() => {
+    const controls = animate(motionValue, value, { duration: 0.7, ease: [0.22, 1, 0.36, 1] })
+    return controls.stop
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value])
+
+  return (
+    <motion.span className={cn('tabular-nums', className)}>{rounded}</motion.span>
   )
 }
 
@@ -145,6 +174,22 @@ export function Spinner({ className = '' }: { className?: string }) {
       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
     </svg>
+  )
+}
+
+/** A shimmering placeholder block for content still loading. Swap in for
+ * Spinner wherever a page's overall shape is already known (tables, lists,
+ * stat cards) — it reads as "this is about to appear" rather than "please
+ * wait," which feels substantially more premium for the same wait time. */
+export function Skeleton({ className }: { className?: string }) {
+  return (
+    <div
+      className={cn(
+        'relative overflow-hidden rounded-lg bg-muted/70',
+        "before:absolute before:inset-0 before:-translate-x-full before:animate-[shimmer_1.6s_infinite] before:bg-gradient-to-r before:from-transparent before:via-white/50 before:to-transparent",
+        className,
+      )}
+    />
   )
 }
 

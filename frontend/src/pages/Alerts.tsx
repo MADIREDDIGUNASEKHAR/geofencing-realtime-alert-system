@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
+import { motion } from 'motion/react'
 import { BellRing, Clock, ScrollText } from 'lucide-react'
 import { ApiError, configureAlert, getAlertHistory, listAlerts, listGeofences, listVehicles } from '../api/client'
 import type { AlertConfig, AlertLogEntry, EventType, Geofence, Vehicle } from '../api/types'
@@ -216,8 +217,14 @@ export default function Alerts() {
                   </tr>
                 </thead>
                 <tbody>
-                  {alerts.map((a) => (
-                    <tr key={a.alert_id} className="border-b border-border/40 last:border-0 hover:bg-muted/40 transition-colors">
+                  {alerts.map((a, i) => (
+                    <motion.tr
+                      key={a.alert_id}
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.25, delay: i * 0.04 }}
+                      className="border-b border-border/40 last:border-0 hover:bg-muted/40 transition-colors"
+                    >
                       <td className="py-3 px-5">
                         <div className="flex items-center gap-2">
                           <span className="font-medium text-foreground">{a.geofence_name}</span>
@@ -233,7 +240,7 @@ export default function Alerts() {
                       <td className="py-3 pr-5">
                         <StatusBadge status={a.status} />
                       </td>
-                    </tr>
+                    </motion.tr>
                   ))}
                 </tbody>
               </table>
@@ -274,8 +281,14 @@ export default function Alerts() {
                     </tr>
                   </thead>
                   <tbody>
-                    {alertLog.map((a) => (
-                      <tr key={a.id} className="border-b border-border/40 last:border-0 hover:bg-muted/40 transition-colors">
+                    {alertLog.map((a, i) => (
+                      <motion.tr
+                        key={a.id}
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.25, delay: i * 0.03 }}
+                        className="border-b border-border/40 last:border-0 hover:bg-muted/40 transition-colors"
+                      >
                         <td className="py-3 px-5 whitespace-nowrap text-foreground/80">
                           <span className="inline-flex items-center gap-1.5">
                             <Clock className="h-3.5 w-3.5 text-muted-foreground/60" />
@@ -297,7 +310,7 @@ export default function Alerts() {
                         <td className="py-3 pr-5 text-muted-foreground font-mono text-xs">
                           {a.location.latitude.toFixed(5)}, {a.location.longitude.toFixed(5)}
                         </td>
-                      </tr>
+                      </motion.tr>
                     ))}
                   </tbody>
                 </table>

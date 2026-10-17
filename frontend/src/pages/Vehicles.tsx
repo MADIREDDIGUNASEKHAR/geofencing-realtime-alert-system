@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
+import { motion } from 'motion/react'
 import { MapPinCheck, Truck } from 'lucide-react'
 import { ApiError, createVehicle, getVehicleLocation, listVehicles } from '../api/client'
 import type { Vehicle, VehicleLocationResponse } from '../api/types'
@@ -11,6 +12,7 @@ import {
   Input,
   Label,
   PageHeader,
+  Skeleton,
   Spinner,
   StatusBadge,
   SuccessBanner,
@@ -133,8 +135,10 @@ export default function Vehicles() {
         <Card className="lg:col-span-2 !p-0 overflow-hidden">
           <h2 className="font-semibold text-foreground px-5 pt-5 pb-3">Registered vehicles</h2>
           {loading ? (
-            <div className="flex justify-center py-8 text-muted-foreground">
-              <Spinner />
+            <div className="px-5 pb-5 space-y-2">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <Skeleton key={i} className="h-14 w-full" />
+              ))}
             </div>
           ) : loadError ? (
             <div className="px-5 pb-5">
@@ -156,8 +160,14 @@ export default function Vehicles() {
                   </tr>
                 </thead>
                 <tbody>
-                  {vehicles.map((v) => (
-                    <tr key={v.id} className="border-b border-border/40 last:border-0 hover:bg-muted/40 transition-colors">
+                  {vehicles.map((v, i) => (
+                    <motion.tr
+                      key={v.id}
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.25, delay: i * 0.04 }}
+                      className="border-b border-border/40 last:border-0 hover:bg-muted/40 transition-colors"
+                    >
                       <td className="py-3 px-5">
                         <div className="flex items-center gap-2.5">
                           <span className="flex items-center justify-center h-8 w-8 rounded-lg bg-indigo-500/10 text-indigo-600 shrink-0">
@@ -180,7 +190,7 @@ export default function Vehicles() {
                           <MapPinCheck className="h-3.5 w-3.5" /> Location
                         </button>
                       </td>
-                    </tr>
+                    </motion.tr>
                   ))}
                 </tbody>
               </table>

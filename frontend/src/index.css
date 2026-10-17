@@ -15,27 +15,83 @@ body {
   position: relative;
 }
 
-/* Soft, fixed color blobs behind everything — this is what the glass panels
-   (semi-transparent + backdrop-blur) actually show through. A flat
-   background defeats the point of glassmorphism. */
+/* Base wash underneath the animated ambient blobs (AmbientBackground.tsx) —
+   this is what the glass panels (semi-transparent + backdrop-blur) actually
+   show through. A flat background defeats the point of glassmorphism. */
 body::before {
   content: "";
   position: fixed;
   inset: 0;
-  z-index: -1;
-  background:
-    radial-gradient(ellipse 60% 50% at 10% 0%, oklch(0.9 0.08 262 / 55%), transparent),
-    radial-gradient(ellipse 55% 45% at 95% 15%, oklch(0.88 0.1 300 / 45%), transparent),
-    radial-gradient(ellipse 50% 45% at 20% 95%, oklch(0.9 0.09 190 / 40%), transparent),
-    oklch(0.98 0.004 258);
+  z-index: -20;
+  background: oklch(0.98 0.004 258);
 }
 
 .dark body::before {
-  background:
-    radial-gradient(ellipse 60% 50% at 10% 0%, oklch(0.32 0.1 262 / 55%), transparent),
-    radial-gradient(ellipse 55% 45% at 95% 15%, oklch(0.3 0.12 300 / 45%), transparent),
-    radial-gradient(ellipse 50% 45% at 20% 95%, oklch(0.3 0.1 190 / 40%), transparent),
-    oklch(0.17 0.02 259);
+  background: oklch(0.17 0.02 259);
+}
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.ambient-blob {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(80px);
+  opacity: 0.55;
+  will-change: transform;
+}
+
+.ambient-blob-1 {
+  top: -10%;
+  left: -8%;
+  width: 42vw;
+  height: 42vw;
+  background: oklch(0.75 0.14 262);
+  animation: drift-1 26s ease-in-out infinite;
+}
+
+.ambient-blob-2 {
+  top: 10%;
+  right: -12%;
+  width: 38vw;
+  height: 38vw;
+  background: oklch(0.78 0.13 300);
+  animation: drift-2 32s ease-in-out infinite;
+}
+
+.ambient-blob-3 {
+  bottom: -14%;
+  left: 18%;
+  width: 36vw;
+  height: 36vw;
+  background: oklch(0.8 0.12 190);
+  animation: drift-3 29s ease-in-out infinite;
+}
+
+.dark .ambient-blob-1 { background: oklch(0.42 0.14 262); }
+.dark .ambient-blob-2 { background: oklch(0.4 0.14 300); }
+.dark .ambient-blob-3 { background: oklch(0.42 0.13 190); }
+
+@keyframes drift-1 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(6vw, 5vh) scale(1.12); }
+}
+@keyframes drift-2 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(-5vw, 7vh) scale(0.92); }
+}
+@keyframes drift-3 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(4vw, -6vh) scale(1.08); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ambient-blob {
+    animation: none;
+  }
 }
 
 ::selection {
@@ -61,12 +117,41 @@ body::before {
 .leaflet-container {
   width: 100%;
   height: 100%;
-  background: #e5e7eb;
+  background: #eef1f6;
   font-family: var(--font-sans);
 }
 
 .leaflet-popup-content-wrapper {
-  border-radius: 12px;
+  border-radius: 14px;
+  box-shadow: 0 12px 32px -8px rgba(16, 24, 40, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+}
+
+.leaflet-popup-tip {
+  box-shadow: none;
+}
+
+.leaflet-interactive {
+  transition: fill-opacity 0.15s ease, stroke-width 0.15s ease;
+}
+
+/* Expanding radar-ping ring behind live vehicle markers */
+.marker-pulse-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  animation: marker-pulse 2.2s cubic-bezier(0.2, 0.6, 0.4, 1) infinite;
+}
+
+@keyframes marker-pulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.55;
+  }
+  100% {
+    transform: scale(2.4);
+    opacity: 0;
+  }
 }
 
 @keyframes toast-in {

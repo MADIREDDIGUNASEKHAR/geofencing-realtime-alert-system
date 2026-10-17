@@ -1,4 +1,5 @@
 import { Route, Routes } from 'react-router-dom'
+import AmbientBackground from './components/AmbientBackground'
 import Layout from './components/Layout'
 import ToastContainer from './components/ToastContainer'
 import { AlertsProvider } from './context/AlertsContext'
@@ -12,6 +13,7 @@ import History from './pages/History'
 export default function App() {
   return (
     <AlertsProvider>
+      <AmbientBackground />
       <ToastContainer />
       <Routes>
         <Route element={<Layout />}>

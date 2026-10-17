@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { motion } from 'motion/react'
 import { Clock, History as HistoryIcon } from 'lucide-react'
 import { ApiError, getViolationHistory, listGeofences, listVehicles } from '../api/client'
 import type { Geofence, Vehicle, Violation } from '../api/types'
@@ -143,8 +144,14 @@ export default function History() {
                   </tr>
                 </thead>
                 <tbody>
-                  {violations.map((v) => (
-                    <tr key={v.id} className="border-b border-border/40 last:border-0 hover:bg-muted/40 transition-colors">
+                  {violations.map((v, i) => (
+                    <motion.tr
+                      key={v.id}
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.25, delay: i * 0.025 }}
+                      className="border-b border-border/40 last:border-0 hover:bg-muted/40 transition-colors"
+                    >
                       <td className="py-3 px-5 whitespace-nowrap text-foreground/80">
                         <span className="inline-flex items-center gap-1.5">
                           <Clock className="h-3.5 w-3.5 text-muted-foreground/60" />
@@ -159,7 +166,7 @@ export default function History() {
                       <td className="py-3 pr-5 text-muted-foreground font-mono text-xs">
                         {v.latitude.toFixed(5)}, {v.longitude.toFixed(5)}
                       </td>
-                    </tr>
+                    </motion.tr>
                   ))}
                 </tbody>
               </table>
