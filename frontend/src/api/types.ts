@@ -21,6 +21,8 @@ export interface CreateGeofenceRequest {
   category: GeofenceCategory
 }
 
+export type UpdateGeofenceRequest = CreateGeofenceRequest
+
 export interface Vehicle {
   id: string
   vehicle_number: string

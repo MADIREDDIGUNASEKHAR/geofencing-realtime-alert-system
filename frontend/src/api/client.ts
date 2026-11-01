@@ -8,6 +8,7 @@ import type {
   Geofence,
   LocationUpdateRequest,
   LocationUpdateResponse,
+  UpdateGeofenceRequest,
   Vehicle,
   VehicleLocationResponse,
   Violation,
@@ -69,6 +70,19 @@ export function createGeofence(req: CreateGeofenceRequest) {
 
 export function listGeofences(category?: string) {
   return request<{ geofences: Geofence[] }>(`/geofences${qs({ category })}`)
+}
+
+export function updateGeofence(id: string, req: UpdateGeofenceRequest) {
+  return request<{ id: string; name: string; status: string }>(`/geofences/${encodeURIComponent(id)}`, {
+    method: 'PUT',
+    body: JSON.stringify(req),
+  })
+}
+
+export function deleteGeofence(id: string) {
+  return request<{ id: string; deleted: boolean }>(`/geofences/${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+  })
 }
 
 // --- Vehicles ---

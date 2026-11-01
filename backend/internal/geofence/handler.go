@@ -2,8 +2,11 @@ package geofence
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"time"
+
+	"github.com/go-chi/chi/v5"
 
 	"geofencing-backend/internal/geo"
 	"geofencing-backend/internal/httpx"
@@ -41,48 +44,67 @@ type createResponse struct {
 	TimeNs string `json:"time_ns"`
 }
 
-func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
-	start := time.Now()
+type geofenceInput struct {
+	Name        string
+	Description string
+	Category    string
+	Coordinates [][2]float64
+}
 
+// parseGeofenceInput decodes and validates a create/update request body,
+// shared by Create and Update so both enforce the same rules.
+func parseGeofenceInput(r *http.Request) (geofenceInput, string, error) {
 	var req createRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		httpx.WriteError(w, http.StatusBadRequest, start, "invalid JSON body")
-		return
+		return geofenceInput{}, "", errors.New("invalid JSON body")
 	}
 
 	if req.Name == "" {
-		httpx.WriteError(w, http.StatusBadRequest, start, "name is required")
-		return
+		return geofenceInput{}, "", errors.New("name is required")
 	}
 	if !allowedCategories[req.Category] {
-		httpx.WriteError(w, http.StatusBadRequest, start, "category must be one of: delivery_zone, restricted_zone, toll_zone, customer_area")
-		return
+		return geofenceInput{}, "", errors.New("category must be one of: delivery_zone, restricted_zone, toll_zone, customer_area")
 	}
 
 	coords := make([][2]float64, len(req.Coordinates))
 	for i, pair := range req.Coordinates {
 		if len(pair) != 2 {
-			httpx.WriteError(w, http.StatusBadRequest, start, "each coordinate must be a [latitude, longitude] pair")
-			return
+			return geofenceInput{}, "", errors.New("each coordinate must be a [latitude, longitude] pair")
 		}
 		coords[i] = [2]float64{pair[0], pair[1]}
 	}
 
 	if err := geo.ValidatePolygon(coords); err != nil {
+		return geofenceInput{}, "", err
+	}
+
+	return geofenceInput{
+		Name:        req.Name,
+		Description: req.Description,
+		Category:    req.Category,
+		Coordinates: coords,
+	}, geo.PolygonWKT(coords), nil
+}
+
+func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
+	start := time.Now()
+
+	input, wkt, err := parseGeofenceInput(r)
+	if err != nil {
 		httpx.WriteError(w, http.StatusBadRequest, start, err.Error())
 		return
 	}
 
 	g := models.Geofence{
 		ID:          ids.New("geo"),
-		Name:        req.Name,
-		Description: req.Description,
-		Category:    req.Category,
-		Coordinates: coords,
+		Name:        input.Name,
+		Description: input.Description,
+		Category:    input.Category,
+		Coordinates: input.Coordinates,
 		Status:      "active",
 	}
 
-	if err := h.repo.Create(r.Context(), g, geo.PolygonWKT(coords)); err != nil {
+	if err := h.repo.Create(r.Context(), g, wkt); err != nil {
 		httpx.WriteError(w, http.StatusInternalServerError, start, "failed to create geofence")
 		return
 	}
@@ -92,6 +114,69 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		Name:   g.Name,
 		Status: g.Status,
 		TimeNs: httpx.ElapsedNs(start),
+	})
+}
+
+func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
+	start := time.Now()
+	id := chi.URLParam(r, "id")
+
+	input, wkt, err := parseGeofenceInput(r)
+	if err != nil {
+		httpx.WriteError(w, http.StatusBadRequest, start, err.Error())
+		return
+	}
+
+	g := models.Geofence{
+		ID:          id,
+		Name:        input.Name,
+		Description: input.Description,
+		Category:    input.Category,
+		Coordinates: input.Coordinates,
+	}
+
+	found, err := h.repo.Update(r.Context(), g, wkt)
+	if err != nil {
+		httpx.WriteError(w, http.StatusInternalServerError, start, "failed to update geofence")
+		return
+	}
+	if !found {
+		httpx.WriteError(w, http.StatusNotFound, start, "geofence not found")
+		return
+	}
+
+	httpx.WriteJSON(w, http.StatusOK, createResponse{
+		ID:     g.ID,
+		Name:   g.Name,
+		Status: "active",
+		TimeNs: httpx.ElapsedNs(start),
+	})
+}
+
+type deleteResponse struct {
+	ID      string `json:"id"`
+	Deleted bool   `json:"deleted"`
+	TimeNs  string `json:"time_ns"`
+}
+
+func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
+	start := time.Now()
+	id := chi.URLParam(r, "id")
+
+	found, err := h.repo.Delete(r.Context(), id)
+	if err != nil {
+		httpx.WriteError(w, http.StatusInternalServerError, start, "failed to delete geofence")
+		return
+	}
+	if !found {
+		httpx.WriteError(w, http.StatusNotFound, start, "geofence not found")
+		return
+	}
+
+	httpx.WriteJSON(w, http.StatusOK, deleteResponse{
+		ID:      id,
+		Deleted: true,
+		TimeNs:  httpx.ElapsedNs(start),
 	})
 }
 

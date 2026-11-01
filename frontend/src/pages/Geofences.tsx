@@ -1,15 +1,17 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { motion } from 'motion/react'
-import { Hexagon, MapPin } from 'lucide-react'
+import { Hexagon, MapPin, Pencil, Trash2, X } from 'lucide-react'
 import MapView from '../components/MapView'
-import { ApiError, createGeofence, listGeofences } from '../api/client'
+import { ApiError, createGeofence, deleteGeofence, listGeofences, updateGeofence } from '../api/client'
 import type { Geofence, GeofenceCategory, LatLng } from '../api/types'
 import {
   Button,
   Card,
   CategoryBadge,
+  ConfirmDialog,
   EmptyState,
   ErrorBanner,
+  IconButton,
   Input,
   Label,
   PageHeader,
@@ -38,6 +40,11 @@ export default function Geofences() {
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [submitSuccess, setSubmitSuccess] = useState<string | null>(null)
+
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<Geofence | null>(null)
+  const [deleting, setDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
 
   async function load(category?: string) {
     setLoading(true)
@@ -68,6 +75,33 @@ export default function Geofences() {
   function clearDrawing() {
     setDrawPoints([])
     setPastedCoords('')
+  }
+
+  function startEdit(g: Geofence) {
+    setEditingId(g.id)
+    setName(g.name)
+    setDescription(g.description)
+    setCategory(g.category)
+    // Stored coordinates are a closed ring (first point repeated at the end);
+    // drawPoints is the open form, so drop the trailing duplicate.
+    const coords = g.coordinates
+    const isClosed =
+      coords.length > 1 &&
+      coords[0][0] === coords[coords.length - 1][0] &&
+      coords[0][1] === coords[coords.length - 1][1]
+    setDrawPoints(isClosed ? coords.slice(0, -1) : coords)
+    setPastedCoords('')
+    setSubmitError(null)
+    setSubmitSuccess(null)
+  }
+
+  function cancelEdit() {
+    setEditingId(null)
+    setName('')
+    setDescription('')
+    setCategory('delivery_zone')
+    clearDrawing()
+    setSubmitError(null)
   }
 
   function applyPastedCoords() {
@@ -103,16 +137,38 @@ export default function Geofences() {
 
     setSubmitting(true)
     try {
-      const res = await createGeofence({ name, description, category, coordinates: closed })
-      setSubmitSuccess(`Geofence "${res.name}" created`)
-      setName('')
-      setDescription('')
-      clearDrawing()
+      if (editingId) {
+        const res = await updateGeofence(editingId, { name, description, category, coordinates: closed })
+        setSubmitSuccess(`Geofence "${res.name}" updated`)
+        cancelEdit()
+      } else {
+        const res = await createGeofence({ name, description, category, coordinates: closed })
+        setSubmitSuccess(`Geofence "${res.name}" created`)
+        setName('')
+        setDescription('')
+        clearDrawing()
+      }
       load(filterCategory || undefined)
     } catch (err) {
-      setSubmitError(err instanceof ApiError ? err.message : 'Failed to create geofence')
+      setSubmitError(err instanceof ApiError ? err.message : `Failed to ${editingId ? 'update' : 'create'} geofence`)
     } finally {
       setSubmitting(false)
+    }
+  }
+
+  async function handleDeleteConfirm() {
+    if (!deleteTarget) return
+    setDeleting(true)
+    setDeleteError(null)
+    try {
+      await deleteGeofence(deleteTarget.id)
+      if (editingId === deleteTarget.id) cancelEdit()
+      setDeleteTarget(null)
+      load(filterCategory || undefined)
+    } catch (err) {
+      setDeleteError(err instanceof ApiError ? err.message : 'Failed to delete geofence')
+    } finally {
+      setDeleting(false)
     }
   }
 
@@ -122,7 +178,14 @@ export default function Geofences() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="order-2 lg:order-none lg:col-span-1 space-y-5">
           <Card>
-            <h2 className="font-semibold text-foreground mb-4">Create geofence</h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-semibold text-foreground">{editingId ? 'Edit geofence' : 'Create geofence'}</h2>
+              {editingId && (
+                <SecondaryButton type="button" size="sm" onClick={cancelEdit}>
+                  <X className="h-3.5 w-3.5" /> Cancel
+                </SecondaryButton>
+              )}
+            </div>
             <form onSubmit={handleSubmit} className="space-y-3">
               <div>
                 <Label>Name</Label>
@@ -190,7 +253,7 @@ export default function Geofences() {
               {submitSuccess && <SuccessBanner message={submitSuccess} />}
 
               <Button type="submit" disabled={submitting} className="w-full">
-                {submitting && <Spinner />} Create geofence
+                {submitting && <Spinner />} {editingId ? 'Save changes' : 'Create geofence'}
               </Button>
             </form>
           </Card>
@@ -224,7 +287,11 @@ export default function Geofences() {
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.25, delay: i * 0.04 }}
-                    className="flex gap-3 border border-border/60 rounded-xl p-3 hover:border-border hover:bg-muted/40 transition-colors"
+                    className={`flex gap-3 border rounded-xl p-3 transition-colors ${
+                      g.id === editingId
+                        ? 'border-primary/50 bg-primary/5'
+                        : 'border-border/60 hover:border-border hover:bg-muted/40'
+                    }`}
                   >
                     <span className="flex items-center justify-center h-8 w-8 shrink-0 rounded-lg bg-muted text-muted-foreground">
                       <MapPin className="h-4 w-4" />
@@ -237,6 +304,22 @@ export default function Geofences() {
                       {g.description && <p className="text-xs text-muted-foreground mt-0.5">{g.description}</p>}
                       <p className="text-[11px] text-muted-foreground/70 mt-1">{g.coordinates.length} points</p>
                     </div>
+                    <div className="flex items-start gap-1 shrink-0">
+                      <IconButton type="button" title="Edit geofence" onClick={() => startEdit(g)}>
+                        <Pencil className="h-3.5 w-3.5" />
+                      </IconButton>
+                      <IconButton
+                        type="button"
+                        title="Delete geofence"
+                        className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                        onClick={() => {
+                          setDeleteError(null)
+                          setDeleteTarget(g)
+                        }}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </IconButton>
+                    </div>
                   </motion.li>
                 ))}
               </ul>
@@ -245,9 +328,30 @@ export default function Geofences() {
         </div>
 
         <div className="order-1 lg:order-none lg:col-span-2 h-[300px] sm:h-[420px] lg:h-[640px] rounded-2xl overflow-hidden border border-white/60 shadow-[0_1px_2px_rgba(16,24,40,0.04),0_8px_24px_-8px_rgba(16,24,40,0.12)] backdrop-blur-xl">
-          <MapView geofences={geofences} drawPoints={drawPoints} onMapClick={handleMapClick} />
+          <MapView geofences={geofences} drawPoints={drawPoints} onMapClick={handleMapClick} highlightGeofenceId={editingId} />
         </div>
       </div>
+
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+        title={`Delete "${deleteTarget?.name}"?`}
+        description={
+          <>
+            This permanently deletes the geofence along with any alert rules and violation history linked to it. This
+            cannot be undone.
+            {deleteError && (
+              <span className="block mt-2">
+                <ErrorBanner message={deleteError} />
+              </span>
+            )}
+          </>
+        }
+        confirmLabel="Delete"
+        destructive
+        loading={deleting}
+        onConfirm={handleDeleteConfirm}
+      />
     </div>
   )
 }

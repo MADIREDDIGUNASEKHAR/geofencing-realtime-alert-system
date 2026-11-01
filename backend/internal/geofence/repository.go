@@ -64,6 +64,36 @@ func (r *Repository) List(ctx context.Context, category string, page pagination.
 	return out, rows.Err()
 }
 
+// Update overwrites an existing geofence's attributes and boundary. It
+// reports whether a row was found and updated.
+func (r *Repository) Update(ctx context.Context, g models.Geofence, wkt string) (bool, error) {
+	coordsJSON, err := json.Marshal(g.Coordinates)
+	if err != nil {
+		return false, fmt.Errorf("marshal coordinates: %w", err)
+	}
+	tag, err := r.pool.Exec(ctx, `
+		UPDATE geofences
+		SET name = $2, description = $3, category = $4, coordinates = $5,
+		    boundary = ST_SetSRID(ST_GeomFromText($6), 4326)::geography
+		WHERE id = $1
+	`, g.ID, g.Name, g.Description, g.Category, coordsJSON, wkt)
+	if err != nil {
+		return false, fmt.Errorf("update geofence: %w", err)
+	}
+	return tag.RowsAffected() > 0, nil
+}
+
+// Delete removes a geofence, cascading to its alert configs, violation
+// history, and vehicle-geofence state via the schema's ON DELETE CASCADE. It
+// reports whether a row was found and deleted.
+func (r *Repository) Delete(ctx context.Context, id string) (bool, error) {
+	tag, err := r.pool.Exec(ctx, `DELETE FROM geofences WHERE id = $1`, id)
+	if err != nil {
+		return false, fmt.Errorf("delete geofence: %w", err)
+	}
+	return tag.RowsAffected() > 0, nil
+}
+
 func (r *Repository) GetByID(ctx context.Context, id string) (*models.Geofence, error) {
 	row := r.pool.QueryRow(ctx, `
 		SELECT id, name, description, category, coordinates, status, created_at

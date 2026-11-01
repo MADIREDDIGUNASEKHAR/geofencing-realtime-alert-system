@@ -8,6 +8,7 @@ import { Textarea as ShadTextarea } from './ui/textarea'
 import { Label as ShadLabel } from './ui/label'
 import { Badge } from './ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from './ui/dialog'
 import type { LucideIcon } from 'lucide-react'
 import type { VariantProps } from 'class-variance-authority'
 
@@ -102,6 +103,63 @@ export function SecondaryButton({
 }: React.ComponentProps<'button'> & Pick<VariantProps<typeof buttonVariants>, 'size'>) {
   return (
     <ShadButton variant="outline" size={size ?? 'lg'} className={cn('bg-white/60 backdrop-blur-xl', className)} {...props} />
+  )
+}
+
+export function IconButton({
+  className,
+  variant,
+  size,
+  ...props
+}: React.ComponentProps<'button'> & VariantProps<typeof buttonVariants>) {
+  return <ShadButton variant={variant ?? 'ghost'} size={size ?? 'icon-sm'} className={cn('shrink-0', className)} {...props} />
+}
+
+/** Confirmation modal for actions that need a deliberate second step, such
+ * as a destructive delete. `onConfirm` may be async; the dialog shows a
+ * spinner on the confirm button and disables both buttons while it runs. */
+export function ConfirmDialog({
+  open,
+  onOpenChange,
+  title,
+  description,
+  confirmLabel = 'Confirm',
+  destructive = false,
+  loading = false,
+  onConfirm,
+}: {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  title: string
+  description: ReactNode
+  confirmLabel?: string
+  destructive?: boolean
+  loading?: boolean
+  onConfirm: () => void
+}) {
+  return (
+    <Dialog open={open} onOpenChange={(next) => !loading && onOpenChange(next)}>
+      <DialogContent className="bg-popover/95 backdrop-blur-xl">
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
+          <DialogDescription>{description}</DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <SecondaryButton type="button" size="sm" onClick={() => onOpenChange(false)} disabled={loading}>
+            Cancel
+          </SecondaryButton>
+          <Button
+            type="button"
+            size="sm"
+            variant={destructive ? 'destructive' : 'default'}
+            onClick={onConfirm}
+            disabled={loading}
+          >
+            {loading && <Spinner />} {confirmLabel}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }
 

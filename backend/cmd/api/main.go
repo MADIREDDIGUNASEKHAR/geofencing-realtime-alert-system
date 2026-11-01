@@ -64,7 +64,7 @@ func main() {
 	r.Use(chimw.Recoverer)
 	r.Use(cors.Handler(cors.Options{
 		AllowedOrigins: []string{"*"},
-		AllowedMethods: []string{"GET", "POST", "OPTIONS"},
+		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders: []string{"Content-Type", "X-API-Key"},
 		MaxAge:         300,
 	}))
@@ -77,6 +77,8 @@ func main() {
 
 		r.Post("/geofences", geofenceHandler.Create)
 		r.Get("/geofences", geofenceHandler.List)
+		r.Put("/geofences/{id}", geofenceHandler.Update)
+		r.Delete("/geofences/{id}", geofenceHandler.Delete)
 
 		r.Post("/vehicles", vehicleHandler.Create)
 		r.Get("/vehicles", vehicleHandler.List)
