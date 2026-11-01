@@ -75,8 +75,21 @@ function ClickCapture({ onClick }: { onClick?: (lat: number, lng: number) => voi
  * odd data — e.g. a test fixture at (0,0) — since that point then takes
  * over the view for everyone. Re-fitting is keyed only on the *identity* of
  * the data (ids + vehicle positions), not on draw/pick state, so it won't
- * fight the user while they're clicking to draw a boundary or pick a point. */
-function FitToData({ geofences, vehicles }: { geofences: Geofence[]; vehicles: VehicleMarker[] }) {
+ * fight the user while they're clicking to draw a boundary or pick a point.
+ *
+ * When a specific geofence is highlighted (selected or being edited), it
+ * zooms to just that geofence's bounds instead — and that re-fit is keyed
+ * on highlightGeofenceId itself, so clicking a different geofence in a list
+ * re-focuses the map even though the underlying data hasn't changed. */
+function FitToData({
+  geofences,
+  vehicles,
+  highlightGeofenceId,
+}: {
+  geofences: Geofence[]
+  vehicles: VehicleMarker[]
+  highlightGeofenceId?: string | null
+}) {
   const map = useMap()
   const key = useMemo(
     () => JSON.stringify([geofences.map((g) => g.id), vehicles.map((v) => [v.id, v.lat, v.lng])]),
@@ -84,16 +97,24 @@ function FitToData({ geofences, vehicles }: { geofences: Geofence[]; vehicles: V
   )
 
   useEffect(() => {
-    const points: [number, number][] = []
-    geofences.forEach((g) => g.coordinates.forEach((c) => points.push(c)))
-    vehicles.forEach((v) => points.push([v.lat, v.lng]))
+    const focused = highlightGeofenceId ? geofences.find((g) => g.id === highlightGeofenceId) : undefined
+
+    const points: [number, number][] = focused
+      ? [...focused.coordinates]
+      : (() => {
+          const all: [number, number][] = []
+          geofences.forEach((g) => g.coordinates.forEach((c) => all.push(c)))
+          vehicles.forEach((v) => all.push([v.lat, v.lng]))
+          return all
+        })()
+
     if (points.length === 0) return
     const bounds = L.latLngBounds(points)
     if (bounds.isValid()) {
-      map.fitBounds(bounds, { padding: [48, 48], maxZoom: 16 })
+      map.fitBounds(bounds, { padding: [48, 48], maxZoom: focused ? 17 : 16 })
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key])
+  }, [key, highlightGeofenceId])
 
   return null
 }
@@ -117,7 +138,7 @@ export default function MapView({
         maxNativeZoom={19}
       />
       <ClickCapture onClick={onMapClick} />
-      <FitToData geofences={geofences} vehicles={vehicles} />
+      <FitToData geofences={geofences} vehicles={vehicles} highlightGeofenceId={highlightGeofenceId} />
 
       {geofences.map((g) => (
         <Polygon

@@ -42,6 +42,7 @@ export default function Geofences() {
   const [submitSuccess, setSubmitSuccess] = useState<string | null>(null)
 
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [selectedId, setSelectedId] = useState<string | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<Geofence | null>(null)
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
@@ -77,7 +78,12 @@ export default function Geofences() {
     setPastedCoords('')
   }
 
+  function toggleSelected(g: Geofence) {
+    setSelectedId((prev) => (prev === g.id ? null : g.id))
+  }
+
   function startEdit(g: Geofence) {
+    setSelectedId(null)
     setEditingId(g.id)
     setName(g.name)
     setDescription(g.description)
@@ -287,10 +293,16 @@ export default function Geofences() {
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.25, delay: i * 0.04 }}
-                    className={`flex gap-3 border rounded-xl p-3 transition-colors ${
+                    onClick={() => toggleSelected(g)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => e.key === 'Enter' && toggleSelected(g)}
+                    className={`flex gap-3 border rounded-xl p-3 transition-colors cursor-pointer ${
                       g.id === editingId
                         ? 'border-primary/50 bg-primary/5'
-                        : 'border-border/60 hover:border-border hover:bg-muted/40'
+                        : g.id === selectedId
+                          ? 'border-primary/40 bg-primary/5 ring-1 ring-primary/20'
+                          : 'border-border/60 hover:border-border hover:bg-muted/40'
                     }`}
                   >
                     <span className="flex items-center justify-center h-8 w-8 shrink-0 rounded-lg bg-muted text-muted-foreground">
@@ -305,14 +317,22 @@ export default function Geofences() {
                       <p className="text-[11px] text-muted-foreground/70 mt-1">{g.coordinates.length} points</p>
                     </div>
                     <div className="flex items-start gap-1 shrink-0">
-                      <IconButton type="button" title="Edit geofence" onClick={() => startEdit(g)}>
+                      <IconButton
+                        type="button"
+                        title="Edit geofence"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          startEdit(g)
+                        }}
+                      >
                         <Pencil className="h-3.5 w-3.5" />
                       </IconButton>
                       <IconButton
                         type="button"
                         title="Delete geofence"
                         className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-                        onClick={() => {
+                        onClick={(e) => {
+                          e.stopPropagation()
                           setDeleteError(null)
                           setDeleteTarget(g)
                         }}
@@ -328,7 +348,12 @@ export default function Geofences() {
         </div>
 
         <div className="order-1 lg:order-none lg:col-span-2 h-[300px] sm:h-[420px] lg:h-[640px] rounded-2xl overflow-hidden border border-white/60 shadow-[0_1px_2px_rgba(16,24,40,0.04),0_8px_24px_-8px_rgba(16,24,40,0.12)] backdrop-blur-xl">
-          <MapView geofences={geofences} drawPoints={drawPoints} onMapClick={handleMapClick} highlightGeofenceId={editingId} />
+          <MapView
+            geofences={geofences}
+            drawPoints={drawPoints}
+            onMapClick={handleMapClick}
+            highlightGeofenceId={editingId ?? selectedId}
+          />
         </div>
       </div>
 
