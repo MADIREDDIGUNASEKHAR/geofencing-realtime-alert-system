@@ -10,3 +10,6 @@ frontend/.env
 # OS / editor
 .DS_Store
 *.log
+
+# Personal video-recording prep notes — not part of the submission
+VIDEO_SCRIPT.md

@@ -116,8 +116,6 @@ export default function Geofences() {
     }
   }
 
-  const mapCenter: LatLng | undefined = geofences[0]?.coordinates[0]
-
   return (
     <div>
       <PageHeader icon={Hexagon} title="Geofences" description="Draw boundaries and manage zone categories" />
@@ -247,7 +245,7 @@ export default function Geofences() {
         </div>
 
         <div className="order-1 lg:order-none lg:col-span-2 h-[300px] sm:h-[420px] lg:h-[640px] rounded-2xl overflow-hidden border border-white/60 shadow-[0_1px_2px_rgba(16,24,40,0.04),0_8px_24px_-8px_rgba(16,24,40,0.12)] backdrop-blur-xl">
-          <MapView geofences={geofences} center={mapCenter} drawPoints={drawPoints} onMapClick={handleMapClick} />
+          <MapView geofences={geofences} drawPoints={drawPoints} onMapClick={handleMapClick} />
         </div>
       </div>
     </div>

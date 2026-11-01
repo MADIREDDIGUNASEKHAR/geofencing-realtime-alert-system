@@ -4,7 +4,7 @@ import { BellRing, Hexagon, LayoutDashboard, LogIn, LogOut, Radio, Truck } from 
 import MapView, { type VehicleMarker } from '../components/MapView'
 import { useAlerts } from '../context/AlertsContext'
 import { ApiError, getVehicleLocation, listGeofences, listVehicles } from '../api/client'
-import type { Geofence, LatLng, Vehicle } from '../api/types'
+import type { Geofence, Vehicle } from '../api/types'
 import { AnimatedNumber, Card, EmptyState, ErrorBanner, EventTypeBadge, PageHeader, Skeleton } from '../components/ui'
 
 const statGridVariants = {
@@ -60,9 +60,6 @@ export default function Dashboard() {
     }
     load()
   }, [])
-
-  const mapCenter: LatLng | undefined =
-    geofences[0]?.coordinates[0] ?? (vehicleMarkers[0] ? [vehicleMarkers[0].lat, vehicleMarkers[0].lng] : undefined)
 
   if (loading) {
     return (
@@ -131,7 +128,7 @@ export default function Dashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 h-[340px] sm:h-[440px] lg:h-[560px] rounded-2xl overflow-hidden border border-white/60 shadow-[0_1px_2px_rgba(16,24,40,0.04),0_8px_24px_-8px_rgba(16,24,40,0.12)] backdrop-blur-xl">
-          <MapView geofences={geofences} vehicles={vehicleMarkers} center={mapCenter} />
+          <MapView geofences={geofences} vehicles={vehicleMarkers} />
         </div>
 
         <Card className="lg:col-span-1 h-[340px] sm:h-[440px] lg:h-[560px] flex flex-col !p-0 overflow-hidden">

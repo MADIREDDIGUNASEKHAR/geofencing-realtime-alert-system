@@ -1,5 +1,6 @@
+import { useEffect, useMemo } from 'react'
 import L from 'leaflet'
-import { MapContainer, Marker, Polygon, Polyline, Popup, TileLayer, useMapEvents } from 'react-leaflet'
+import { MapContainer, Marker, Polygon, Polyline, Popup, TileLayer, useMap, useMapEvents } from 'react-leaflet'
 import type { Geofence, LatLng } from '../api/types'
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -68,6 +69,35 @@ function ClickCapture({ onClick }: { onClick?: (lat: number, lng: number) => voi
   return null
 }
 
+/** Frames the view around whatever geofences/vehicles actually exist,
+ * instead of trusting a single hardcoded point. Centering on "the first
+ * geofence's first coordinate" silently breaks the moment any geofence has
+ * odd data — e.g. a test fixture at (0,0) — since that point then takes
+ * over the view for everyone. Re-fitting is keyed only on the *identity* of
+ * the data (ids + vehicle positions), not on draw/pick state, so it won't
+ * fight the user while they're clicking to draw a boundary or pick a point. */
+function FitToData({ geofences, vehicles }: { geofences: Geofence[]; vehicles: VehicleMarker[] }) {
+  const map = useMap()
+  const key = useMemo(
+    () => JSON.stringify([geofences.map((g) => g.id), vehicles.map((v) => [v.id, v.lat, v.lng])]),
+    [geofences, vehicles],
+  )
+
+  useEffect(() => {
+    const points: [number, number][] = []
+    geofences.forEach((g) => g.coordinates.forEach((c) => points.push(c)))
+    vehicles.forEach((v) => points.push([v.lat, v.lng]))
+    if (points.length === 0) return
+    const bounds = L.latLngBounds(points)
+    if (bounds.isValid()) {
+      map.fitBounds(bounds, { padding: [48, 48], maxZoom: 16 })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key])
+
+  return null
+}
+
 export default function MapView({
   geofences = [],
   vehicles = [],
@@ -87,6 +117,7 @@ export default function MapView({
         maxNativeZoom={19}
       />
       <ClickCapture onClick={onMapClick} />
+      <FitToData geofences={geofences} vehicles={vehicles} />
 
       {geofences.map((g) => (
         <Polygon

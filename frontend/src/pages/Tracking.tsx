@@ -51,8 +51,6 @@ export default function Tracking() {
     return [la, ln]
   }, [lat, lng])
 
-  const mapCenter: LatLng | undefined = geofences[0]?.coordinates[0]
-
   function handleMapClick(clickedLat: number, clickedLng: number) {
     setLat(clickedLat.toFixed(6))
     setLng(clickedLng.toFixed(6))
@@ -173,7 +171,7 @@ export default function Tracking() {
         </Card>
 
         <div className="order-1 lg:order-none lg:col-span-2 h-[300px] sm:h-[420px] lg:h-[640px] rounded-2xl overflow-hidden border border-white/60 shadow-[0_1px_2px_rgba(16,24,40,0.04),0_8px_24px_-8px_rgba(16,24,40,0.12)] backdrop-blur-xl">
-          <MapView geofences={geofences} center={mapCenter} pickedPoint={pickedPoint} onMapClick={handleMapClick} />
+          <MapView geofences={geofences} pickedPoint={pickedPoint} onMapClick={handleMapClick} />
         </div>
       </div>
     </div>
