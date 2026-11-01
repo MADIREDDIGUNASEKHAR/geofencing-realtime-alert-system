@@ -1,7 +1,7 @@
-import { useEffect, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type MouseEvent, type ReactNode } from 'react'
 import { cn } from 'cn'
 import { Inbox } from 'lucide-react'
-import { animate, motion, useMotionValue, useTransform } from 'motion/react'
+import { animate, motion, useMotionTemplate, useMotionValue, useSpring, useTransform } from 'motion/react'
 import { Button as ShadButton, buttonVariants } from './ui/button'
 import { Input as ShadInput } from './ui/input'
 import { Textarea as ShadTextarea } from './ui/textarea'
@@ -12,6 +12,11 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import type { LucideIcon } from 'lucide-react'
 import type { VariantProps } from 'class-variance-authority'
 
+/** `hoverable` cards tilt in 3D toward the cursor (mapped from pointer
+ * position within the card, spring-smoothed) and show a soft glare that
+ * tracks the same point — a cheap way to make a flat glass panel read as a
+ * physical, lit surface. Plain cards (forms, list containers) skip all of
+ * this and stay static. */
 export function Card({
   children,
   className = '',
@@ -21,15 +26,53 @@ export function Card({
   className?: string
   hoverable?: boolean
 }) {
+  const ref = useRef<HTMLDivElement>(null)
+  const [hovering, setHovering] = useState(false)
+  const px = useMotionValue(0.5)
+  const py = useMotionValue(0.5)
+  const rotateX = useSpring(useTransform(py, [0, 1], [7, -7]), { stiffness: 300, damping: 22 })
+  const rotateY = useSpring(useTransform(px, [0, 1], [-7, 7]), { stiffness: 300, damping: 22 })
+  const glareBackground = useMotionTemplate`radial-gradient(220px circle at ${useTransform(px, (v) => `${v * 100}%`)} ${useTransform(
+    py,
+    (v) => `${v * 100}%`,
+  )}, rgba(255,255,255,0.45), transparent 70%)`
+
+  function handleMouseMove(e: MouseEvent<HTMLDivElement>) {
+    if (!hoverable || !ref.current) return
+    const rect = ref.current.getBoundingClientRect()
+    px.set((e.clientX - rect.left) / rect.width)
+    py.set((e.clientY - rect.top) / rect.height)
+  }
+
+  function handleMouseLeave() {
+    if (!hoverable) return
+    setHovering(false)
+    px.set(0.5)
+    py.set(0.5)
+  }
+
   return (
     <motion.div
+      ref={ref}
+      onMouseMove={handleMouseMove}
+      onMouseEnter={() => hoverable && setHovering(true)}
+      onMouseLeave={handleMouseLeave}
+      style={hoverable ? { rotateX, rotateY, transformPerspective: 900 } : undefined}
       className={cn(
-        'rounded-2xl border border-white/60 bg-card/70 text-card-foreground shadow-[0_1px_2px_rgba(16,24,40,0.04),0_8px_24px_-8px_rgba(16,24,40,0.12)] backdrop-blur-xl p-5',
+        'relative rounded-2xl border border-white/60 bg-card/70 text-card-foreground shadow-[0_1px_2px_rgba(16,24,40,0.04),0_8px_24px_-8px_rgba(16,24,40,0.12)] backdrop-blur-xl p-5',
+        hoverable && 'overflow-hidden',
         className,
       )}
       whileHover={hoverable ? { y: -3, boxShadow: '0 16px 36px -8px rgba(16,24,40,0.18)' } : undefined}
       transition={{ duration: 0.2, ease: 'easeOut' }}
     >
+      {hoverable && (
+        <motion.div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 transition-opacity duration-300"
+          style={{ background: glareBackground, opacity: hovering ? 1 : 0 }}
+        />
+      )}
       {children}
     </motion.div>
   )
