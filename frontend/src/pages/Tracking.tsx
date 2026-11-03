@@ -12,6 +12,47 @@ function nowForInput(): string {
   return new Date(d.getTime() - tzOffsetMs).toISOString().slice(0, 16)
 }
 
+// Jump-to-city shortcuts so picking a precise point doesn't require manually
+// zooming in from a whole-world view first — pick a city, then click to
+// refine within it.
+const INDIA_CITIES: { name: string; position: LatLng }[] = [
+  { name: 'Bengaluru', position: [12.9716, 77.5946] },
+  { name: 'Mumbai', position: [19.076, 72.8777] },
+  { name: 'Delhi', position: [28.7041, 77.1025] },
+  { name: 'Hyderabad', position: [17.385, 78.4867] },
+  { name: 'Chennai', position: [13.0827, 80.2707] },
+  { name: 'Kolkata', position: [22.5726, 88.3639] },
+  { name: 'Pune', position: [18.5204, 73.8567] },
+  { name: 'Ahmedabad', position: [23.0225, 72.5714] },
+  { name: 'Jaipur', position: [26.9124, 75.7873] },
+  { name: 'Surat', position: [21.1702, 72.8311] },
+  { name: 'Lucknow', position: [26.8467, 80.9462] },
+  { name: 'Kanpur', position: [26.4499, 80.3319] },
+  { name: 'Nagpur', position: [21.1458, 79.0882] },
+  { name: 'Indore', position: [22.7196, 75.8577] },
+  { name: 'Bhopal', position: [23.2599, 77.4126] },
+  { name: 'Visakhapatnam', position: [17.6868, 83.2185] },
+  { name: 'Patna', position: [25.5941, 85.1376] },
+  { name: 'Vadodara', position: [22.3072, 73.1812] },
+  { name: 'Agra', position: [27.1767, 78.0081] },
+  { name: 'Nashik', position: [19.9975, 73.7898] },
+  { name: 'Coimbatore', position: [11.0168, 76.9558] },
+  { name: 'Chandigarh', position: [30.7333, 76.7794] },
+  { name: 'Kochi', position: [9.9312, 76.2673] },
+  { name: 'Guwahati', position: [26.1445, 91.7362] },
+  { name: 'Bhubaneswar', position: [20.2961, 85.8245] },
+  { name: 'Thiruvananthapuram', position: [8.5241, 76.9366] },
+  { name: 'Mysuru', position: [12.2958, 76.6394] },
+  { name: 'Noida', position: [28.5355, 77.391] },
+  { name: 'Gurugram', position: [28.4595, 77.0266] },
+  { name: 'Jodhpur', position: [26.2389, 73.0243] },
+  { name: 'Varanasi', position: [25.3176, 82.9739] },
+  { name: 'Amritsar', position: [31.634, 74.8723] },
+  { name: 'Raipur', position: [21.2514, 81.6296] },
+  { name: 'Ranchi', position: [23.3441, 85.3096] },
+]
+const CITY_OPTIONS = INDIA_CITIES.map((c) => ({ value: c.name, label: c.name }))
+
 export default function Tracking() {
   const [vehicles, setVehicles] = useState<Vehicle[]>([])
   const [geofences, setGeofences] = useState<Geofence[]>([])
@@ -22,6 +63,8 @@ export default function Tracking() {
   const [lat, setLat] = useState<string>('')
   const [lng, setLng] = useState<string>('')
   const [timestampLocal, setTimestampLocal] = useState(nowForInput())
+  const [cityName, setCityName] = useState('')
+  const [flyTarget, setFlyTarget] = useState<{ position: LatLng; zoom?: number } | null>(null)
 
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
@@ -54,6 +97,15 @@ export default function Tracking() {
   function handleMapClick(clickedLat: number, clickedLng: number) {
     setLat(clickedLat.toFixed(6))
     setLng(clickedLng.toFixed(6))
+  }
+
+  function handleCitySelect(name: string) {
+    setCityName(name)
+    const city = INDIA_CITIES.find((c) => c.name === name)
+    if (!city) return
+    setFlyTarget({ position: city.position })
+    setLat(city.position[0].toFixed(6))
+    setLng(city.position[1].toFixed(6))
   }
 
   async function handleSubmit(e: FormEvent) {
@@ -121,9 +173,18 @@ export default function Tracking() {
                   options={vehicles.map((v) => ({ value: v.id, label: `${v.vehicle_number} — ${v.driver_name}` }))}
                 />
               </div>
+              <div>
+                <Label>Jump to a city</Label>
+                <SelectField
+                  value={cityName}
+                  onValueChange={handleCitySelect}
+                  placeholder="Select a city…"
+                  options={CITY_OPTIONS}
+                />
+              </div>
               <p className="text-xs text-muted-foreground flex items-center gap-1.5">
                 <MapPin className="h-3.5 w-3.5 shrink-0" />
-                Click anywhere on the map to set the location, or type coordinates directly.
+                Pick a city to jump there, then click the map to set the exact point, or type coordinates directly.
               </p>
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -171,7 +232,7 @@ export default function Tracking() {
         </Card>
 
         <div className="order-1 lg:order-none lg:col-span-2 h-[300px] sm:h-[420px] lg:h-[640px] rounded-2xl overflow-hidden border border-white/60 shadow-[0_1px_2px_rgba(16,24,40,0.04),0_8px_24px_-8px_rgba(16,24,40,0.12)] backdrop-blur-xl">
-          <MapView geofences={geofences} pickedPoint={pickedPoint} onMapClick={handleMapClick} />
+          <MapView geofences={geofences} pickedPoint={pickedPoint} onMapClick={handleMapClick} flyTo={flyTarget} />
         </div>
       </div>
     </div>

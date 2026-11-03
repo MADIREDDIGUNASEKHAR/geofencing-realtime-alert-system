@@ -58,6 +58,7 @@ interface MapViewProps {
   drawPoints?: LatLng[]
   pickedPoint?: LatLng | null
   highlightGeofenceId?: string | null
+  flyTo?: { position: LatLng; zoom?: number } | null
 }
 
 function ClickCapture({ onClick }: { onClick?: (lat: number, lng: number) => void }) {
@@ -119,6 +120,20 @@ function FitToData({
   return null
 }
 
+/** Smoothly pans/zooms to a point on demand — e.g. picking a city from a
+ * dropdown — without fighting FitToData. Keyed on `to` by reference, so the
+ * caller re-triggers it by passing a fresh `{ position, nonce }` object each
+ * time, even when flying back to the same city twice in a row. */
+function FlyTo({ to }: { to: { position: LatLng; zoom?: number } | null }) {
+  const map = useMap()
+  useEffect(() => {
+    if (!to) return
+    map.flyTo(to.position, to.zoom ?? 12, { duration: 1.1 })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [to])
+  return null
+}
+
 export default function MapView({
   geofences = [],
   vehicles = [],
@@ -128,6 +143,7 @@ export default function MapView({
   drawPoints = [],
   pickedPoint = null,
   highlightGeofenceId = null,
+  flyTo = null,
 }: MapViewProps) {
   return (
     <MapContainer center={center} zoom={zoom} scrollWheelZoom className="z-0">
@@ -139,6 +155,7 @@ export default function MapView({
       />
       <ClickCapture onClick={onMapClick} />
       <FitToData geofences={geofences} vehicles={vehicles} highlightGeofenceId={highlightGeofenceId} />
+      <FlyTo to={flyTo} />
 
       {geofences.map((g) => (
         <Polygon
