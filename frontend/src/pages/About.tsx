@@ -173,7 +173,7 @@ function SkillTag({ children }: { children: React.ReactNode }) {
 export default function About() {
   return (
     <div className="space-y-6">
-      <PageHeader icon={UserRound} title="Know about me" description="The developer behind this project" />
+      <PageHeader icon={UserRound} title="About Me" description="The developer behind this project" />
 
       <Card hoverable className="relative overflow-hidden">
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5">

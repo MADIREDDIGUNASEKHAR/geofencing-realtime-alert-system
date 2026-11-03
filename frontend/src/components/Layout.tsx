@@ -11,7 +11,7 @@ const navItems = [
   { to: '/tracking', label: 'Tracking', icon: Navigation },
   { to: '/alerts', label: 'Alerts', icon: BellRing },
   { to: '/history', label: 'History', icon: History },
-  { to: '/about', label: 'Know about me', icon: UserRound },
+  { to: '/about', label: 'About Me', icon: UserRound },
 ]
 
 const MotionNavLink = motion.create(NavLink)
